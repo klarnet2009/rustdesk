@@ -41,7 +41,7 @@ JWT_SECRET = 'rustdesk-api-jwt-secret'
 DB_PATH = 'rustdesk.db'
 
 # SSL Configuration
-SSL_ENABLED = os.environ.get('SSL_ENABLED', 'true').lower() == 'true'
+SSL_ENABLED = os.environ.get('SSL_ENABLED', 'false').lower() == 'true'
 SSL_CERT = os.path.join(os.path.dirname(__file__), '10.21.31.11+2.pem')
 SSL_KEY = os.path.join(os.path.dirname(__file__), '10.21.31.11+2-key.pem')
 
@@ -1021,27 +1021,58 @@ def web_login():
         username = request.form.get('username')
         password = request.form.get('password')
         
+        print(f"[LOGIN] Attempting login for user: {username}")
+        
         user = None
         conn = get_db()
         
-        # Try local authentication first
-        local_user = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+        # Check if LDAP is enabled - try LDAP FIRST for domain users
+        ldap_enabled = is_ldap_enabled()
+        print(f"[LOGIN] LDAP enabled: {ldap_enabled}")
         
-        if local_user and local_user['password'] == hash_password(password) and local_user['status'] == 1:
-            user = local_user
-        
-        # If local auth failed and LDAP is enabled, try LDAP
-        if not user and is_ldap_enabled():
+        if ldap_enabled:
+            print(f"[LOGIN] Trying LDAP authentication for: {username}")
             ldap_user = ldap_authenticate(username, password)
+            
             if ldap_user:
+                print(f"[LOGIN] LDAP auth SUCCESS for: {username}")
                 # Sync LDAP user to local database
-                is_admin = 'Domain Admins' in ldap_user.get('groups', []) or \
-                          'Administrators' in ldap_user.get('groups', [])
+                # Check if user is member of any admin group
+                user_groups = ldap_user.get('groups', [])
+                admin_groups = [
+                    'Domain Admins',           # EN
+                    'Administrators',          # EN
+                    'Enterprise Admins',       # EN
+                    'Администраторы домена',   # RU
+                    'Администраторы',          # RU
+                    'Admins',
+                    'IT Admins',
+                    'RustDesk Admins',         # Custom group for RustDesk admins
+                ]
+                is_admin = any(group in user_groups for group in admin_groups)
+                print(f"[LDAP] User '{ldap_user.get('username')}' groups: {user_groups}, is_admin: {is_admin}")
                 user_id = sync_ldap_user_to_db(ldap_user, is_admin)
                 
                 if user_id:
                     user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-                    print(f"[LDAP] User '{username}' authenticated via LDAP")
+                    print(f"[LDAP] User '{username}' authenticated via LDAP, user_id: {user_id}")
+            else:
+                print(f"[LOGIN] LDAP auth FAILED for: {username}")
+        
+        # If LDAP failed or disabled, try local authentication
+        if not user:
+            print(f"[LOGIN] Trying local authentication for: {username}")
+            local_user = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+            
+            if local_user:
+                print(f"[LOGIN] Found local user: {username}, checking password...")
+                if local_user['password'] == hash_password(password) and local_user['status'] == 1:
+                    user = local_user
+                    print(f"[LOGIN] Local auth SUCCESS for: {username}")
+                else:
+                    print(f"[LOGIN] Local auth FAILED for: {username} (wrong password or disabled)")
+            else:
+                print(f"[LOGIN] Local user not found: {username}")
         
         conn.close()
         
@@ -1049,8 +1080,10 @@ def web_login():
             session['user_id'] = user['id']
             session['username'] = user['username']
             session['is_admin'] = user['is_admin']
+            print(f"[LOGIN] Session created for: {username}, is_admin: {user['is_admin']}")
             return redirect(url_for('web_dashboard'))
         
+        print(f"[LOGIN] Login FAILED for: {username}")
         error = 'Invalid username or password'
     
     return render_template_string(LOGIN_HTML, error=error)
@@ -1494,8 +1527,10 @@ def api_stats_connections():
 
 # ==================== MAIN ====================
 
+# Initialize DB on module load (for Gunicorn)
+init_db()
+
 if __name__ == '__main__':
-    init_db()
     
     # Check SSL certificates
     ssl_context = None

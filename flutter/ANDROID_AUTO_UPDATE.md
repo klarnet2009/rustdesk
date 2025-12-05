@@ -131,7 +131,7 @@ VersionInfoWidget(
 ```yaml
 dependencies:
   dio: ^5.3.1
-  app_installer: ^0.4.0
+  app_installer: ^1.3.1
   package_info_plus: ^4.2.0  # уже был
   percent_indicator: ^4.2.2  # для UI
 ```

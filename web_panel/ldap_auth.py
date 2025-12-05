@@ -225,15 +225,18 @@ def sync_ldap_user_to_db(ldap_user, is_admin=False):
     existing = c.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
     
     if existing:
-        # Update existing user
-        c.execute("UPDATE users SET email = ? WHERE username = ?", (email, username))
+        # Update existing user - ALWAYS update is_admin based on current LDAP groups
+        c.execute("UPDATE users SET email = ?, is_admin = ? WHERE username = ?", 
+                  (email, 1 if is_admin else 0, username))
         user_id = existing[0]
+        print(f"[LDAP] Updated user '{username}', is_admin={is_admin}")
     else:
         # Create new user with random password (they'll use LDAP auth)
         random_password = hashlib.sha256(f"ldap_{username}_{email}".encode()).hexdigest()
         c.execute("INSERT INTO users (username, password, email, is_admin, status) VALUES (?, ?, ?, ?, 1)",
                   (username, random_password, email, 1 if is_admin else 0))
         user_id = c.lastrowid
+        print(f"[LDAP] Created user '{username}', is_admin={is_admin}")
     
     conn.commit()
     conn.close()
@@ -280,6 +283,7 @@ if __name__ == '__main__':
     if LDAP_AVAILABLE:
         success, message = test_ldap_connection()
         print(f"Connection Test: {'OK' if success else 'FAILED'} - {message}")
+
 
 
 
