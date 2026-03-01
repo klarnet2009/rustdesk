@@ -74,6 +74,7 @@ lazy_static::lazy_static! {
     pub static ref CONTROL_PERMISSIONS_ARRAY: Arc::<Mutex<Vec<(i32, ControlPermissions)>>> = Default::default();
     static ref SWITCH_SIDES_UUID: Arc::<Mutex<HashMap<String, (Instant, uuid::Uuid)>>> = Default::default();
     static ref WAKELOCK_SENDER: Arc::<Mutex<std::sync::mpsc::Sender<(usize, usize)>>> = Arc::new(Mutex::new(start_wakelock_thread()));
+    static ref WAKELOCK_KEEP_AWAKE_OPTION: Arc::<Mutex<Option<bool>>> = Default::default();
 }
 
 #[cfg(any(target_os = "windows", target_os = "linux"))]
@@ -906,6 +907,7 @@ impl Connection {
                 _ = second_timer.tick() => {
                     #[cfg(windows)]
                     conn.portable_check();
+                    raii::AuthedConnID::check_wake_lock_on_setting_changed();
                     if let Some((instant, minute)) = conn.auto_disconnect_timer.as_ref() {
                         if instant.elapsed().as_secs() > minute * 60 {
                             conn.send_close_reason_no_retry("Connection failed due to inactivity").await;
@@ -1418,7 +1420,7 @@ impl Connection {
             pi.platform = "Android".into();
         }
         #[cfg(all(target_os = "macos", not(feature = "unix-file-copy-paste")))]
-        let platform_additions = serde_json::Map::new();
+        let mut platform_additions = serde_json::Map::new();
         #[cfg(any(
             target_os = "windows",
             target_os = "linux",
@@ -1446,6 +1448,13 @@ impl Connection {
             if crate::platform::is_installed() {
                 platform_additions.extend(virtual_display_manager::get_platform_additions());
             }
+            platform_additions.insert(
+                "supported_privacy_mode_impl".into(),
+                json!(privacy_mode::get_supported_privacy_mode_impl()),
+            );
+        }
+        #[cfg(target_os = "macos")]
+        {
             platform_additions.insert(
                 "supported_privacy_mode_impl".into(),
                 json!(privacy_mode::get_supported_privacy_mode_impl()),
@@ -2223,11 +2232,12 @@ impl Connection {
 
             // https://github.com/rustdesk/rustdesk-server-pro/discussions/646
             // `is_logon` is used to check login with `OPTION_ALLOW_LOGON_SCREEN_PASSWORD` == "Y".
-            // `is_logon_ui()` is used on Windows, because there's no good way to detect `is_locked()`.
-            // Detecting `is_logon_ui()` (if `LogonUI.exe` running) is a workaround.
+            // `is_logon_ui()` is a fallback for logon UI detection on Windows.
             #[cfg(target_os = "windows")]
             let is_logon = || {
-                crate::platform::is_prelogin() || {
+                crate::platform::is_prelogin()
+                    || crate::platform::is_locked()
+                    || {
                     match crate::platform::is_logon_ui() {
                         Ok(result) => result,
                         Err(e) => {
@@ -5008,6 +5018,7 @@ impl FileRemoveLogControl {
 }
 
 fn start_wakelock_thread() -> std::sync::mpsc::Sender<(usize, usize)> {
+    // Check if we should keep awake during incoming sessions
     use crate::platform::{get_wakelock, WakeLock};
     let (tx, rx) = std::sync::mpsc::channel::<(usize, usize)>();
     std::thread::spawn(move || {
@@ -5016,9 +5027,15 @@ fn start_wakelock_thread() -> std::sync::mpsc::Sender<(usize, usize)> {
         loop {
             match rx.recv() {
                 Ok((conn_count, remote_count)) => {
-                    if conn_count == 0 {
-                        wakelock = None;
-                        log::info!("drop wakelock");
+                    let keep_awake = config::Config::get_bool_option(
+                        keys::OPTION_KEEP_AWAKE_DURING_INCOMING_SESSIONS,
+                    );
+                    *WAKELOCK_KEEP_AWAKE_OPTION.lock().unwrap() = Some(keep_awake);
+                    if conn_count == 0 || !keep_awake {
+                        if wakelock.is_some() {
+                            wakelock = None;
+                            log::info!("drop wakelock");
+                        }
                     } else {
                         let mut display = remote_count > 0;
                         if let Some(_w) = wakelock.as_mut() {
@@ -5173,9 +5190,13 @@ impl Retina {
 
     #[inline]
     fn on_mouse_event(&mut self, e: &mut MouseEvent, current: usize) {
-        let evt_type = e.mask & 0x7;
-        if evt_type == crate::input::MOUSE_TYPE_WHEEL {
-            // x and y are always 0, +1 or -1
+        let evt_type = e.mask & crate::input::MOUSE_TYPE_MASK;
+        // Delta-based events do not contain absolute coordinates.
+        // Avoid applying Retina coordinate scaling to them.
+        if evt_type == crate::input::MOUSE_TYPE_WHEEL
+            || evt_type == crate::input::MOUSE_TYPE_TRACKPAD
+            || evt_type == crate::input::MOUSE_TYPE_MOVE_RELATIVE
+        {
             return;
         }
         let Some(d) = self.displays.get(current) else {
@@ -5325,6 +5346,16 @@ mod raii {
                 .send((conn_count, remote_count)));
         }
 
+        pub fn check_wake_lock_on_setting_changed() {
+            let current = config::Config::get_bool_option(
+                keys::OPTION_KEEP_AWAKE_DURING_INCOMING_SESSIONS,
+            );
+            let cached = *WAKELOCK_KEEP_AWAKE_OPTION.lock().unwrap();
+            if cached != Some(current) {
+                Self::check_wake_lock();
+            }
+        }
+
         #[cfg(windows)]
         pub fn non_port_forward_conn_count() -> usize {
             AUTHED_CONNS
@@ -5421,6 +5452,9 @@ mod raii {
                     .unwrap()
                     .on_connection_close(self.0);
             }
+            // Clear per-connection state to avoid stale behavior if conn ids are reused.
+            #[cfg(not(any(target_os = "android", target_os = "ios")))]
+            clear_relative_mouse_active(self.0);
             AUTHED_CONNS.lock().unwrap().retain(|c| c.conn_id != self.0);
             let remote_count = AUTHED_CONNS
                 .lock()
