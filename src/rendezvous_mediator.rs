@@ -733,6 +733,7 @@ impl RendezvousMediator {
         msg_out.set_register_peer(RegisterPeer {
             id,
             serial,
+            hostname: crate::whoami_hostname(),
             ..Default::default()
         });
         socket.send(&msg_out).await?;
@@ -919,13 +920,13 @@ pub struct CheckIfResendPk {
 impl CheckIfResendPk {
     pub fn new() -> Self {
         Self {
-            pk: Config::get_cached_pk(),
+            pk: Some(Config::get_key_pair().1),
         }
     }
 }
 impl Drop for CheckIfResendPk {
     fn drop(&mut self) {
-        if SENT_REGISTER_PK.load(Ordering::SeqCst) && Config::get_cached_pk() != self.pk {
+        if SENT_REGISTER_PK.load(Ordering::SeqCst) && Some(Config::get_key_pair().1) != self.pk {
             Config::set_key_confirmed(false);
             log::info!("Set key_confirmed to false due to pk changed, will resend register_pk");
         }

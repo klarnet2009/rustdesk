@@ -1877,7 +1877,7 @@ impl Connection {
             port_forward: self.port_forward_address.clone(),
             peer_id,
             name,
-            avatar: self.lr.avatar.clone(),
+            avatar: "".to_owned(),
             authorized,
             keyboard: self.keyboard,
             clipboard: self.clipboard,
@@ -1980,6 +1980,43 @@ impl Connection {
         hasher2.update(&hasher.finalize()[..]);
         hasher2.update(&self.hash.challenge);
         hasher2.finalize()[..] == self.lr.password[..]
+    }
+
+    async fn is_same_account_login(&self, access_token: &str) -> bool {
+        if access_token.is_empty() {
+            return false;
+        }
+        let api_server = Config::get_option("api-server");
+        if api_server.is_empty() {
+            return false;
+        }
+        let user_info_str = Config::get_option("user_info");
+        let local_name = if let Ok(serde_json::Value::Object(map)) = serde_json::from_str(&user_info_str) {
+            if let Some(serde_json::Value::String(name)) = map.get("name") {
+                name.clone()
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        };
+        
+        let api_server = api_server.trim_end_matches('/');
+        let url = format!("{}/api/currentUser", api_server);
+        
+        let client = reqwest::Client::new();
+        if let Ok(resp) = client.post(&url).bearer_auth(access_token).send().await {
+            if resp.status().is_success() {
+                if let Ok(json) = resp.json::<serde_json::Value>().await {
+                    if let Some(name) = json.get("name").and_then(|v| v.as_str()) {
+                        if name == &local_name {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        false
     }
 
     fn validate_password(&mut self) -> bool {
@@ -2311,6 +2348,18 @@ impl Connection {
                 }
                 return true;
             } else if self.is_recent_session(false) {
+                if err_msg.is_empty() {
+                    #[cfg(target_os = "linux")]
+                    self.linux_headless_handle.wait_desktop_cm_ready().await;
+                    if !self.send_logon_response_and_keep_alive().await {
+                        return false;
+                    }
+                    self.try_start_cm(lr.my_id.clone(), lr.my_name.clone(), self.authorized);
+                } else {
+                    self.send_login_error(err_msg).await;
+                }
+            } else if self.is_same_account_login(&lr.access_token).await {
+                log::info!("Passwordless login authorized for same account via token");
                 if err_msg.is_empty() {
                     #[cfg(target_os = "linux")]
                     self.linux_headless_handle.wait_desktop_cm_ready().await;
