@@ -1383,7 +1383,8 @@ def api_current_user():
 @token_required
 def api_get_ab():
     conn = get_db()
-    ab = conn.execute("SELECT * FROM address_books WHERE user_id = ?", (request.current_user['user_id'],)).fetchone()
+    # HARDCODED `0` for Global Address Book across all users
+    ab = conn.execute("SELECT * FROM address_books WHERE user_id = ?", (0,)).fetchone()
     conn.close()
     
     data = ab['data'] if ab else '{"tags":[],"peers":[]}'
@@ -1396,20 +1397,20 @@ def api_ab():
     conn = get_db()
     
     if request.method == 'GET':
-        # Get address book
+        # Get address book (Global `0`)
         ab = conn.execute("SELECT * FROM address_books WHERE user_id = ?", 
-                          (request.current_user['user_id'],)).fetchone()
+                          (0,)).fetchone()
         conn.close()
         data = ab['data'] if ab else '{"tags":[],"peers":[]}'
         return jsonify({"updated_at": int(time.time()), "data": data})
     
     else:
-        # POST - Update address book
+        # POST - Update address book (Global `0`)
         data = request.json or {}
         ab_data = data.get('data', '')
         
         conn.execute("INSERT OR REPLACE INTO address_books (user_id, data, updated_at) VALUES (?, ?, datetime('now'))",
-                     (request.current_user['user_id'], ab_data))
+                     (0, ab_data))
         conn.commit()
         conn.close()
         
@@ -1524,6 +1525,36 @@ def api_stats_connections():
         data.append({"date": date, "count": count})
     conn.close()
     return jsonify(data)
+
+@app.route('/api/peers', methods=['GET', 'OPTIONS'])
+@token_required
+def api_peers():
+    if request.method == 'OPTIONS':
+        return '', 200
+        
+    conn = get_db()
+    # Fetch devices belonging to the user
+    devices = conn.execute("SELECT * FROM devices WHERE user_id = ?", (request.current_user['user_id'],)).fetchall()
+    conn.close()
+    
+    peers_list = []
+    for d in devices:
+        peer = {
+            "id": d['id'],
+            "user": str(d['user_id']),
+            "user_name": d['username'] or '',
+            "device_group_name": d['group_name'] or 'Default',
+            "note": "",
+            "status": 1 if d['online'] else 0,
+            "info": {
+                "os": d['os'] or '',
+                "username": d['username'] or '',
+                "device_name": d['hostname'] or ''
+            }
+        }
+        peers_list.append(peer)
+        
+    return jsonify({"data": peers_list})
 
 # ==================== MAIN ====================
 
