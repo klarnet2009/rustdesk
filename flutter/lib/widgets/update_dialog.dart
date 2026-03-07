@@ -190,7 +190,7 @@ class CheckUpdateButton extends StatelessWidget {
           icon: const Icon(Icons.update),
           iconSize: iconSize,
           onPressed: () {
-            updateController.checkForUpdates();
+            updateController?.checkForUpdates();
           },
         ),
       ),
