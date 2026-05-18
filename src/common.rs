@@ -149,7 +149,7 @@ pub fn global_init() -> bool {
         
         // API Server (для авторизации и адресной книги)
         if let Some(server) = RENDEZVOUS_SERVERS.first() {
-            settings.insert("api-server".to_string(), format!("http://{}:21114", server));
+            settings.insert("api-server".to_string(), format!("https://{}:21114", server));
         }
     }
     
@@ -1118,9 +1118,9 @@ fn get_api_server_(api: String, custom: String) -> String {
     if !s0.is_empty() {
         let s = crate::increase_port(&s0, -2);
         if s == s0 {
-            return format!("http://{}:{}", s, config::RENDEZVOUS_PORT - 2);
+            return format!("https://{}:{}", s, config::RENDEZVOUS_PORT - 2);
         } else {
-            return format!("http://{}", s);
+            return format!("https://{}", s);
         }
     }
     "https://admin.rustdesk.com".to_owned()
