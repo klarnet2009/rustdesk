@@ -3767,6 +3767,7 @@ dependencies = [
  "httparse",
  "lazy_static",
  "libc",
+ "libloading 0.8.4",
  "log",
  "mac_address",
  "machine-uid",
@@ -3802,6 +3803,7 @@ dependencies = [
  "webrtc",
  "whoami",
  "winapi 0.3.9",
+ "x11 2.21.0",
  "zstd 0.13.1",
 ]
 
