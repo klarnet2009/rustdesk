@@ -175,7 +175,7 @@ def serve_static(filename):
 
 BASE_HTML = '''
 <!DOCTYPE html>
-<html lang="ru" class="light">
+<html lang="ru" data-theme="corporate">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -183,84 +183,102 @@ BASE_HTML = '''
     <link href="/static/output.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 </head>
-<body class="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-    <!-- Sidebar -->
-    <nav class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <a href="/" class="sidebar-brand">
-                <i class="bi bi-display"></i>
-                RustDesk Panel
-            </a>
-        </div>
-        <ul class="sidebar-nav">
-            <li class="nav-item">
-                <a class="nav-link {{ 'active' if active_page == 'dashboard' else '' }}" href="{{ url_for('web_dashboard') }}">
-                    <i class="bi bi-speedometer2"></i>
-                    Dashboard
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ 'active' if active_page == 'devices' else '' }}" href="{{ url_for('web_devices') }}">
-                    <i class="bi bi-pc-display"></i>
-                    Devices
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ 'active' if active_page == 'users' else '' }}" href="{{ url_for('web_users') }}">
-                    <i class="bi bi-people"></i>
-                    Users
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ 'active' if active_page == 'logs' else '' }}" href="{{ url_for('web_logs') }}">
-                    <i class="bi bi-journal-text"></i>
-                    Logs
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ 'active' if active_page == 'settings' else '' }}" href="{{ url_for('web_settings') }}">
-                    <i class="bi bi-gear"></i>
-                    Settings
-                </a>
-            </li>
-        </ul>
-        <div class="mt-auto p-4 border-t border-gray-200 dark:border-gray-700">
-            <small class="text-gray-500 dark:text-gray-400">RustDesk Panel v2.0</small>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="top-navbar">
-            <button class="lg:hidden p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg" onclick="toggleSidebar()">
-                <i class="bi bi-list text-2xl"></i>
-            </button>
-            <div class="flex items-center gap-3">
-                <span class="text-gray-500 dark:text-gray-400">{{ current_time }}</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <button class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg" onclick="toggleTheme()" title="Toggle Theme">
-                    <i class="bi bi-moon-stars text-xl" id="themeIcon"></i>
-                </button>
-                <div class="relative">
-                    <button class="user-dropdown flex items-center gap-2" onclick="toggleDropdown('userDropdown')">
-                        <i class="bi bi-person-circle"></i>
-                        {{ session.username }}
-                        <i class="bi bi-chevron-down text-xs"></i>
+<body class="min-h-screen bg-base-200">
+    <div class="drawer lg:drawer-open">
+        <input id="sidebar-drawer" type="checkbox" class="drawer-toggle" />
+        
+        <div class="drawer-content flex flex-col min-h-screen">
+            <!-- Top Navbar -->
+            <div class="navbar bg-base-100 border-b border-base-300 px-6 justify-between shadow-sm z-10">
+                <div class="flex-none lg:hidden">
+                    <label for="sidebar-drawer" class="btn btn-square btn-ghost">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-6 h-6 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </label>
+                </div>
+                <div class="flex-grow">
+                    <span class="text-sm opacity-60">{{ current_time }}</span>
+                </div>
+                <div class="flex-none gap-2">
+                    <!-- Theme Toggle -->
+                    <button class="btn btn-ghost btn-circle" onclick="toggleTheme()" title="Toggle Theme">
+                        <i class="bi bi-moon-stars text-xl" id="themeIcon"></i>
                     </button>
-                    <div id="userDropdown" class="dropdown-menu">
-                        <a class="dropdown-item" href="{{ url_for('web_logout') }}">
-                            <i class="bi bi-box-arrow-right mr-2"></i>Logout
-                        </a>
+                    
+                    <!-- User Dropdown -->
+                    <div class="dropdown dropdown-end">
+                        <div tabindex="0" role="button" class="btn btn-ghost m-1 flex items-center gap-2 normal-case font-medium">
+                            <i class="bi bi-person-circle text-lg"></i>
+                            {{ session.username }}
+                            <i class="bi bi-chevron-down text-xs"></i>
+                        </div>
+                        <ul tabindex="0" class="dropdown-content z-[30] menu p-2 shadow bg-base-100 rounded-box w-52 border border-base-300 mt-2">
+                            <li>
+                                <a href="{{ url_for('web_logout') }}" class="text-error">
+                                    <i class="bi bi-box-arrow-right"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
+
+            <!-- Content Area -->
+            <div class="p-6 flex-grow bg-base-200">
+                {% block content %}{% endblock %}
+            </div>
         </div>
 
-        <div class="content-area">
-            {% block content %}{% endblock %}
+        <!-- Sidebar -->
+        <div class="drawer-side z-20">
+            <label for="sidebar-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
+            <div class="p-4 w-80 min-h-full bg-base-100 border-r border-base-300 text-base-content flex flex-col">
+                <!-- Brand -->
+                <div class="px-4 py-3 border-b border-base-300 mb-4">
+                    <a href="/" class="flex items-center gap-2 text-xl font-bold text-base-content no-underline">
+                        <i class="bi bi-display text-primary text-2xl"></i>
+                        <span>RustDesk Panel</span>
+                    </a>
+                </div>
+                <!-- Nav Links -->
+                <ul class="menu menu-vertical p-0 gap-1 flex-grow">
+                    <li>
+                        <a class="{{ 'active bg-primary text-primary-content' if active_page == 'dashboard' else '' }}" href="{{ url_for('web_dashboard') }}">
+                            <i class="bi bi-speedometer2 text-lg"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a class="{{ 'active bg-primary text-primary-content' if active_page == 'devices' else '' }}" href="{{ url_for('web_devices') }}">
+                            <i class="bi bi-pc-display text-lg"></i>
+                            Devices
+                        </a>
+                    </li>
+                    <li>
+                        <a class="{{ 'active bg-primary text-primary-content' if active_page == 'users' else '' }}" href="{{ url_for('web_users') }}">
+                            <i class="bi bi-people text-lg"></i>
+                            Users
+                        </a>
+                    </li>
+                    <li>
+                        <a class="{{ 'active bg-primary text-primary-content' if active_page == 'logs' else '' }}" href="{{ url_for('web_logs') }}">
+                            <i class="bi bi-journal-text text-lg"></i>
+                            Logs
+                        </a>
+                    </li>
+                    <li>
+                        <a class="{{ 'active bg-primary text-primary-content' if active_page == 'settings' else '' }}" href="{{ url_for('web_settings') }}">
+                            <i class="bi bi-gear text-lg"></i>
+                            Settings
+                        </a>
+                    </li>
+                </ul>
+                <!-- Footer -->
+                <div class="mt-auto pt-4 border-t border-base-300">
+                    <small class="text-base-content/60">RustDesk Panel v2.0</small>
+                </div>
+            </div>
         </div>
-    </main>
+    </div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
@@ -269,16 +287,11 @@ BASE_HTML = '''
         // Theme toggle
         function toggleTheme() {
             const html = document.documentElement;
-            const isDark = html.classList.contains('dark');
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'business' ? 'corporate' : 'business';
             
-            if (isDark) {
-                html.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-            } else {
-                html.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-            }
-            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
             updateThemeIcon();
             
             // Reload for charts if they exist
@@ -289,36 +302,14 @@ BASE_HTML = '''
 
         function updateThemeIcon() {
             const icon = document.getElementById('themeIcon');
-            const isDark = document.documentElement.classList.contains('dark');
+            const isDark = document.documentElement.getAttribute('data-theme') === 'business';
             icon.className = isDark ? 'bi bi-sun text-xl' : 'bi bi-moon-stars text-xl';
         }
 
         // Init theme from localStorage
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        if (savedTheme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
+        const savedTheme = localStorage.getItem('theme') || 'corporate';
+        document.documentElement.setAttribute('data-theme', savedTheme);
         updateThemeIcon();
-
-        // Sidebar toggle (mobile)
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('show');
-        }
-
-        // Dropdown toggle
-        function toggleDropdown(id) {
-            const dropdown = document.getElementById(id);
-            dropdown.classList.toggle('show');
-        }
-
-        // Close dropdowns when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.relative')) {
-                document.querySelectorAll('.dropdown-menu.show').forEach(d => d.classList.remove('show'));
-            }
-        });
 
         // Modal functions
         function openModal(id) {
