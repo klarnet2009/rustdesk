@@ -8,7 +8,7 @@ This roadmap defines the path to overhaul the RustDesk Web Management Panel UI u
 
 - [x] **Phase 1: Tailwind & DaisyUI UI Migration** - Redesign dashboard and all administration views using DaisyUI.
 - [x] **Phase 2: Device Discovery & Heartbeat Audit** - Audit and fix device list/heartbeat APIs to ensure all online client devices are reliably registered.
-- [ ] **Phase 3: Connection flow & Integration check** - Integrate client-side launcher scheme and document configuration.
+- [x] **Phase 3: Connection flow & Integration check** - Integrate client-side launcher scheme and document configuration.
 
 ## Phase Details
 
@@ -51,7 +51,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 03-01: Connect button integration and user documentation.
+- [x] 03-01: Connect button integration and user documentation.
 
 ## Progress
 
@@ -59,7 +59,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Tailwind & DaisyUI UI Migration | 3/3 | Completed | 2026-06-16 |
 | 2. Device Discovery & Heartbeat Audit | 2/2 | Completed | 2026-06-16 |
-| 3. Connection flow & Integration check | 0/1 | Not started | - |
+| 3. Connection flow & Integration check | 1/1 | Completed | 2026-06-16 |
 
 ---
 *Roadmap defined: 2026-06-16*
