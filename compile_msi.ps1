@@ -75,6 +75,8 @@ $buildDir = "flutter\build\windows\x64\runner\Release"
 if (-not (Test-Path $buildDir)) {
     throw "Build directory not found: $buildDir"
 }
+Remove-Item -Path "rustdesk" -Recurse -Force -ErrorAction SilentlyContinue
+Copy-Item -Path $buildDir -Destination "rustdesk" -Recurse -Force
 
 # 6. Build MSI
 Write-Host "Building MSI..." -ForegroundColor Cyan
