@@ -181,7 +181,7 @@ BASE_HTML = '''
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }} - RustDesk Panel</title>
     <link href="/static/output.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="min-h-screen bg-base-200">
     <div class="drawer lg:drawer-open">
@@ -192,7 +192,7 @@ BASE_HTML = '''
             <div class="navbar bg-base-100 border-b border-base-300 px-6 justify-between shadow-sm z-10">
                 <div class="flex-none lg:hidden">
                     <label for="sidebar-drawer" class="btn btn-square btn-ghost">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-6 h-6 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        <i data-lucide="menu" class="w-6 h-6"></i>
                     </label>
                 </div>
                 <div class="flex-grow">
@@ -200,21 +200,21 @@ BASE_HTML = '''
                 </div>
                 <div class="flex-none gap-2">
                     <!-- Theme Toggle -->
-                    <button class="btn btn-ghost btn-circle" onclick="toggleTheme()" title="Toggle Theme">
-                        <i class="bi bi-moon-stars text-xl" id="themeIcon"></i>
+                    <button class="btn btn-ghost btn-circle" onclick="toggleTheme()" title="Toggle Theme" id="themeIconContainer">
+                        <i data-lucide="moon" class="w-5 h-5"></i>
                     </button>
                     
                     <!-- User Dropdown -->
                     <div class="dropdown dropdown-end">
                         <div tabindex="0" role="button" class="btn btn-ghost m-1 flex items-center gap-2 normal-case font-medium">
-                            <i class="bi bi-person-circle text-lg"></i>
+                            <i data-lucide="user" class="w-5 h-5 opacity-70"></i>
                             {{ session.username }}
-                            <i class="bi bi-chevron-down text-xs"></i>
+                            <i data-lucide="chevron-down" class="w-4 h-4 opacity-50"></i>
                         </div>
                         <ul tabindex="0" class="dropdown-content z-[30] menu p-2 shadow bg-base-100 rounded-box w-52 border border-base-300 mt-2">
                             <li>
                                 <a href="{{ url_for('web_logout') }}" class="text-error">
-                                    <i class="bi bi-box-arrow-right"></i> Logout
+                                    <i data-lucide="log-out" class="w-4 h-4"></i> Logout
                                 </a>
                             </li>
                         </ul>
@@ -235,39 +235,39 @@ BASE_HTML = '''
                 <!-- Brand -->
                 <div class="px-4 py-3 border-b border-base-300 mb-4">
                     <a href="/" class="flex items-center gap-2 text-xl font-bold text-base-content no-underline">
-                        <i class="bi bi-display text-primary text-2xl"></i>
+                        <i data-lucide="monitor" class="text-primary w-6 h-6"></i>
                         <span>RustDesk Panel</span>
                     </a>
                 </div>
                 <!-- Nav Links -->
                 <ul class="menu menu-vertical p-0 gap-1 flex-grow">
                     <li>
-                        <a class="{{ 'active bg-primary text-primary-content' if active_page == 'dashboard' else '' }}" href="{{ url_for('web_dashboard') }}">
-                            <i class="bi bi-speedometer2 text-lg"></i>
+                        <a class="{{ 'active bg-primary text-primary-content font-semibold' if active_page == 'dashboard' else '' }}" href="{{ url_for('web_dashboard') }}">
+                            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
                             Dashboard
                         </a>
                     </li>
                     <li>
-                        <a class="{{ 'active bg-primary text-primary-content' if active_page == 'devices' else '' }}" href="{{ url_for('web_devices') }}">
-                            <i class="bi bi-pc-display text-lg"></i>
+                        <a class="{{ 'active bg-primary text-primary-content font-semibold' if active_page == 'devices' else '' }}" href="{{ url_for('web_devices') }}">
+                            <i data-lucide="monitor" class="w-5 h-5"></i>
                             Devices
                         </a>
                     </li>
                     <li>
-                        <a class="{{ 'active bg-primary text-primary-content' if active_page == 'users' else '' }}" href="{{ url_for('web_users') }}">
-                            <i class="bi bi-people text-lg"></i>
+                        <a class="{{ 'active bg-primary text-primary-content font-semibold' if active_page == 'users' else '' }}" href="{{ url_for('web_users') }}">
+                            <i data-lucide="users" class="w-5 h-5"></i>
                             Users
                         </a>
                     </li>
                     <li>
-                        <a class="{{ 'active bg-primary text-primary-content' if active_page == 'logs' else '' }}" href="{{ url_for('web_logs') }}">
-                            <i class="bi bi-journal-text text-lg"></i>
+                        <a class="{{ 'active bg-primary text-primary-content font-semibold' if active_page == 'logs' else '' }}" href="{{ url_for('web_logs') }}">
+                            <i data-lucide="clipboard-list" class="w-5 h-5"></i>
                             Logs
                         </a>
                     </li>
                     <li>
-                        <a class="{{ 'active bg-primary text-primary-content' if active_page == 'settings' else '' }}" href="{{ url_for('web_settings') }}">
-                            <i class="bi bi-gear text-lg"></i>
+                        <a class="{{ 'active bg-primary text-primary-content font-semibold' if active_page == 'settings' else '' }}" href="{{ url_for('web_settings') }}">
+                            <i data-lucide="settings" class="w-5 h-5"></i>
                             Settings
                         </a>
                     </li>
@@ -301,42 +301,26 @@ BASE_HTML = '''
         }
 
         function updateThemeIcon() {
-            const icon = document.getElementById('themeIcon');
-            const isDark = document.documentElement.getAttribute('data-theme') === 'business';
-            icon.className = isDark ? 'bi bi-sun text-xl' : 'bi bi-moon-stars text-xl';
+            const iconContainer = document.getElementById('themeIconContainer');
+            if (iconContainer) {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'business';
+                iconContainer.innerHTML = isDark 
+                    ? '<i data-lucide="sun" class="w-5 h-5"></i>' 
+                    : '<i data-lucide="moon" class="w-5 h-5"></i>';
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+            }
         }
 
         // Init theme from localStorage
         const savedTheme = localStorage.getItem('theme') || 'corporate';
         document.documentElement.setAttribute('data-theme', savedTheme);
-        updateThemeIcon();
-
-        // Modal functions
-        function openModal(id) {
-            document.getElementById(id).classList.add('show');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('show');
-            document.body.style.overflow = '';
-        }
-
-        // Close modal on backdrop click
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('modal-backdrop')) {
-                e.target.classList.remove('show');
-                document.body.style.overflow = '';
-            }
-        });
-
-        // Close modal on Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.modal-backdrop.show').forEach(m => {
-                    m.classList.remove('show');
-                    document.body.style.overflow = '';
-                });
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            updateThemeIcon();
+            if (window.lucide) {
+                lucide.createIcons();
             }
         });
     </script>
@@ -347,50 +331,66 @@ BASE_HTML = '''
 
 LOGIN_HTML = '''
 <!DOCTYPE html>
-<html lang="ru" class="light">
+<html lang="ru" data-theme="corporate">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - RustDesk Panel</title>
     <link href="/static/output.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
-    <div class="login-card">
-        <div class="text-center mb-6">
-            <i class="bi bi-display login-logo"></i>
-            <h3 class="mt-4 text-2xl font-bold text-gray-900 dark:text-white">RustDesk Panel</h3>
-            <p class="text-gray-500 dark:text-gray-400 mt-2">Sign in to your account</p>
+<body class="min-h-screen bg-base-200 flex items-center justify-center">
+    <div class="card w-96 bg-base-100 shadow-xl border border-base-300">
+        <div class="card-body p-8">
+            <div class="flex flex-col items-center mb-6">
+                <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                    <i data-lucide="monitor" class="w-8 h-8 text-primary"></i>
+                </div>
+                <h2 class="card-title text-2xl font-bold text-base-content">RustDesk Panel</h2>
+                <p class="text-sm text-base-content/60">Sign in to your account</p>
+            </div>
+            
+            {% if error %}
+            <div class="alert alert-error shadow-sm mb-4">
+                <i data-lucide="alert-circle" class="w-5 h-5 text-white"></i>
+                <span class="text-sm font-semibold text-white">{{ error }}</span>
+            </div>
+            {% endif %}
+            
+            <form method="POST" class="space-y-4">
+                <div class="form-control w-full">
+                    <label class="label"><span class="label-text font-semibold">Username</span></label>
+                    <label class="input input-bordered flex items-center gap-2">
+                        <i data-lucide="user" class="w-4 h-4 opacity-50"></i>
+                        <input type="text" class="grow" name="username" placeholder="Username" required autofocus />
+                    </label>
+                </div>
+                
+                <div class="form-control w-full">
+                    <label class="label"><span class="label-text font-semibold">Password</span></label>
+                    <label class="input input-bordered flex items-center gap-2">
+                        <i data-lucide="lock" class="w-4 h-4 opacity-50"></i>
+                        <input type="password" class="grow" name="password" placeholder="Password" required />
+                    </label>
+                </div>
+                
+                <div class="card-actions justify-end mt-6">
+                    <button type="submit" class="btn btn-primary w-full text-white">
+                        <i data-lucide="log-in" class="w-4 h-4"></i> Sign In
+                    </button>
+                </div>
+            </form>
         </div>
-        {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
-        {% endif %}
-        <form method="POST">
-            <div class="mb-4">
-                <label class="form-label">Username</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-person"></i></span>
-                    <input type="text" class="form-control rounded-l-none" name="username" required autofocus>
-                </div>
-            </div>
-            <div class="mb-6">
-                <label class="form-label">Password</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                    <input type="password" class="form-control rounded-l-none" name="password" required>
-                </div>
-            </div>
-            <button type="submit" class="btn btn-primary w-full py-3">
-                <i class="bi bi-box-arrow-in-right mr-2"></i>Sign In
-            </button>
-        </form>
     </div>
     <script>
         // Init theme
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        if (savedTheme === 'dark') {
-            document.documentElement.classList.add('dark');
-        }
+        const savedTheme = localStorage.getItem('theme') || 'corporate';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        });
     </script>
 </body>
 </html>
@@ -406,8 +406,8 @@ DASHBOARD_HTML = '''
     <div class="stats shadow bg-base-100 border border-base-300 p-2">
         <div class="stat flex items-center gap-4">
             <div class="stat-figure text-primary">
-                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg flex items-center justify-center text-2xl">
-                    <i class="bi bi-pc-display"></i>
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg flex items-center justify-center">
+                    <i data-lucide="monitor" class="w-6 h-6"></i>
                 </div>
             </div>
             <div>
@@ -420,8 +420,8 @@ DASHBOARD_HTML = '''
     <div class="stats shadow bg-base-100 border border-base-300 p-2">
         <div class="stat flex items-center gap-4">
             <div class="stat-figure text-success">
-                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg flex items-center justify-center text-2xl">
-                    <i class="bi bi-wifi"></i>
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg flex items-center justify-center">
+                    <i data-lucide="wifi" class="w-6 h-6"></i>
                 </div>
             </div>
             <div>
@@ -434,8 +434,8 @@ DASHBOARD_HTML = '''
     <div class="stats shadow bg-base-100 border border-base-300 p-2">
         <div class="stat flex items-center gap-4">
             <div class="stat-figure text-secondary">
-                <div class="w-12 h-12 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 rounded-lg flex items-center justify-center text-2xl">
-                    <i class="bi bi-arrow-left-right"></i>
+                <div class="w-12 h-12 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 rounded-lg flex items-center justify-center">
+                    <i data-lucide="arrow-left-right" class="w-6 h-6"></i>
                 </div>
             </div>
             <div>
@@ -448,8 +448,8 @@ DASHBOARD_HTML = '''
     <div class="stats shadow bg-base-100 border border-base-300 p-2">
         <div class="stat flex items-center gap-4">
             <div class="stat-figure text-warning">
-                <div class="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg flex items-center justify-center text-2xl">
-                    <i class="bi bi-people"></i>
+                <div class="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg flex items-center justify-center">
+                    <i data-lucide="users" class="w-6 h-6"></i>
                 </div>
             </div>
             <div>
@@ -521,8 +521,8 @@ DASHBOARD_HTML = '''
                         </td>
                         <td>{{ d.last_seen_str }}</td>
                         <td>
-                            <button class="btn btn-primary btn-sm btn-connect" onclick="connectTo('{{ d.id }}')">
-                                <i class="bi bi-link-45deg"></i> Connect
+                            <button class="btn btn-primary btn-sm text-white" onclick="connectTo('{{ d.id }}')">
+                                <i data-lucide="link" class="w-4 h-4"></i> Connect
                             </button>
                         </td>
                     </tr>
@@ -599,8 +599,8 @@ DEVICES_HTML = '''
 {% block content %}
 <div class="flex justify-between items-center mb-6">
     <h4 class="text-xl font-semibold text-base-content">Devices</h4>
-    <button class="btn btn-primary" onclick="location.reload()">
-        <i class="bi bi-arrow-clockwise mr-2"></i>Refresh
+    <button class="btn btn-primary text-white" onclick="location.reload()">
+        <i data-lucide="rotate-cw" class="w-4 h-4 mr-2"></i>Refresh
     </button>
 </div>
 
@@ -642,11 +642,11 @@ DEVICES_HTML = '''
                         </td>
                         <td>{{ d.last_seen_str }}</td>
                         <td class="flex gap-1">
-                            <button class="btn btn-primary btn-sm btn-square" onclick="connectTo('{{ d.id }}')" title="Connect">
-                                <i class="bi bi-link-45deg text-lg"></i>
+                            <button class="btn btn-primary btn-sm btn-square text-white" onclick="connectTo('{{ d.id }}')" title="Connect">
+                                <i data-lucide="link" class="w-4 h-4"></i>
                             </button>
                             <button class="btn btn-outline btn-sm btn-square" onclick="showDetails('{{ d.id }}')" title="Details">
-                                <i class="bi bi-info-circle text-base"></i>
+                                <i data-lucide="info" class="w-4 h-4"></i>
                             </button>
                         </td>
                     </tr>
@@ -714,11 +714,14 @@ function showDetails(id) {
                 </tbody>
             </table>
         </div>
-        <button class="btn btn-primary w-full mt-4" onclick="connectTo('${d.id}')">
-            <i class="bi bi-link-45deg mr-2"></i>Connect
+        <button class="btn btn-primary w-full mt-4 text-white" onclick="connectTo('${d.id}')">
+            <i data-lucide="link" class="w-4 h-4 mr-2"></i>Connect
         </button>
     `;
     document.getElementById('detailsModal').showModal();
+    if (window.lucide) {
+        lucide.createIcons();
+    }
 }
 </script>
 {% endblock %}
@@ -729,8 +732,8 @@ USERS_HTML = '''
 {% block content %}
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-base-content">Users</h1>
-    <button class="btn btn-primary" onclick="openModal('addUserModal')">
-        <i class="bi bi-plus-lg mr-2"></i>Add User
+    <button class="btn btn-primary text-white" onclick="document.getElementById('addUserModal').showModal()">
+        <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>Add User
     </button>
 </div>
 
@@ -753,7 +756,7 @@ USERS_HTML = '''
                     {% for u in users %}
                     <tr class="hover">
                         <td>{{ u.id }}</td>
-                        <td class="font-medium flex items-center gap-2"><i class="bi bi-person-circle text-base-content/40"></i>{{ u.username }}</td>
+                        <td class="font-medium flex items-center gap-2"><i data-lucide="user" class="w-4 h-4 text-base-content/40"></i>{{ u.username }}</td>
                         <td>{{ u.email or '-' }}</td>
                         <td>
                             {% if u.is_admin %}
@@ -772,7 +775,7 @@ USERS_HTML = '''
                         <td class="text-sm opacity-70">{{ u.created_at }}</td>
                         <td>
                             <button class="btn btn-sm btn-ghost text-red-600 {{ 'btn-disabled opacity-50' if u.username == 'admin' else '' }}" onclick="deleteUser({{ u.id }})" {{ 'disabled' if u.username == 'admin' else '' }}>
-                                <i class="bi bi-trash text-lg"></i>
+                                <i data-lucide="trash-2" class="w-5 h-5"></i>
                             </button>
                         </td>
                     </tr>
@@ -834,15 +837,7 @@ function deleteUser(id) {
     }
 }
 
-// Override openModal for addUserModal to use dialog showModal
-window.openModal = function(id) {
-    if (id === 'addUserModal') {
-        document.getElementById('addUserModal').showModal();
-    } else {
-        document.getElementById(id).classList.add('show');
-        document.body.style.overflow = 'hidden';
-    }
-};
+// openModal is no longer needed since we use native dialog.showModal()
 </script>
 {% endblock %}
 '''
@@ -921,7 +916,7 @@ SETTINGS_HTML = '''
     <div class="space-y-6">
         <div class="card bg-base-100 border border-base-300 shadow-sm">
             <div class="card-body p-6">
-                <h2 class="card-title text-base font-semibold border-b border-base-200 pb-3 mb-4"><i class="bi bi-server text-primary mr-2"></i>Server Configuration</h2>
+                <h2 class="card-title text-base font-semibold border-b border-base-200 pb-3 mb-4"><i data-lucide="server" class="text-primary w-5 h-5 mr-2"></i>Server Configuration</h2>
                 <div class="form-control w-full mb-4">
                     <label class="label"><span class="label-text opacity-70">ID Server</span></label>
                     <input type="text" class="input input-bordered w-full bg-base-200" value="10.21.31.11" disabled>
@@ -939,7 +934,7 @@ SETTINGS_HTML = '''
         
         <div class="card bg-base-100 border border-base-300 shadow-sm">
             <div class="card-body p-6">
-                <h2 class="card-title text-base font-semibold border-b border-base-200 pb-3 mb-4"><i class="bi bi-info-circle text-primary mr-2"></i>System Info</h2>
+                <h2 class="card-title text-base font-semibold border-b border-base-200 pb-3 mb-4"><i data-lucide="info" class="text-primary w-5 h-5 mr-2"></i>System Info</h2>
                 <div class="overflow-x-auto">
                     <table class="table table-compact w-full text-sm">
                         <tbody>
@@ -973,9 +968,9 @@ SETTINGS_HTML = '''
     <div class="card bg-base-100 border border-base-300 shadow-sm">
         <div class="card-body p-6">
             <div class="flex justify-between items-center border-b border-base-200 pb-3 mb-4">
-                <h2 class="card-title text-base font-semibold"><i class="bi bi-diagram-3 text-primary mr-2"></i>LDAP / Active Directory</h2>
+                <h2 class="card-title text-base font-semibold"><i data-lucide="network" class="text-primary w-5 h-5 mr-2"></i>LDAP / Active Directory</h2>
                 <button type="button" class="btn btn-outline btn-sm" onclick="testLdap()">
-                    <i class="bi bi-plug mr-1"></i>Test Connection
+                    <i data-lucide="plug" class="w-4 h-4 mr-1"></i>Test Connection
                 </button>
             </div>
             
@@ -1007,8 +1002,8 @@ SETTINGS_HTML = '''
                         <span class="label-text font-semibold">Enable LDAP Authentication</span>
                     </label>
                 </div>
-                <button type="submit" class="btn btn-primary w-full sm:w-auto">
-                    <i class="bi bi-save mr-1"></i>Save Settings
+                <button type="submit" class="btn btn-primary w-full sm:w-auto text-white">
+                    <i data-lucide="save" class="w-4 h-4 mr-1"></i>Save Settings
                 </button>
             </form>
         </div>
@@ -1020,27 +1015,30 @@ SETTINGS_HTML = '''
 <script>
 function testLdap() {
     const resultDiv = document.getElementById('ldapTestResult');
-    resultDiv.className = 'alert alert-info shadow-sm';
-    resultDiv.innerHTML = '<i class="bi bi-hourglass-split mr-2"></i>Testing connection...';
+    resultDiv.className = 'alert alert-info shadow-sm flex items-center gap-2';
+    resultDiv.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-blue-600"></i>Testing connection...';
     resultDiv.classList.remove('hidden');
+    if (window.lucide) { lucide.createIcons(); }
     
     fetch('/api/ldap/test', { method: 'POST' })
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                resultDiv.className = 'alert alert-success shadow-sm';
-                resultDiv.innerHTML = '<i class="bi bi-check-circle mr-2"></i>' + data.message;
+                resultDiv.className = 'alert alert-success shadow-sm flex items-center gap-2';
+                resultDiv.innerHTML = '<i data-lucide="check-circle-2" class="w-4 h-4 text-green-600"></i>' + data.message;
             } else {
-                resultDiv.className = 'alert alert-danger shadow-sm';
-                resultDiv.innerHTML = '<i class="bi bi-x-circle mr-2"></i>' + data.message;
+                resultDiv.className = 'alert alert-danger shadow-sm flex items-center gap-2';
+                resultDiv.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 text-red-600"></i>' + data.message;
                 if (!data.ldap_available) {
                     resultDiv.innerHTML += '<br><small>Install ldap3: <code>pip install ldap3</code></small>';
                 }
             }
+            if (window.lucide) { lucide.createIcons(); }
         })
         .catch(err => {
-            resultDiv.className = 'alert alert-danger shadow-sm';
-            resultDiv.innerHTML = '<i class="bi bi-x-circle mr-2"></i>Connection test failed: ' + err;
+            resultDiv.className = 'alert alert-danger shadow-sm flex items-center gap-2';
+            resultDiv.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 text-red-600"></i>Connection test failed: ' + err;
+            if (window.lucide) { lucide.createIcons(); }
         });
 }
 </script>

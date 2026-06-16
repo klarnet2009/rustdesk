@@ -2,6 +2,9 @@
 
 This guide maps where the key components of the RustDesk Web Management Panel live.
 
+> [!NOTE]
+> The `/web_panel` directory exists in both client (`rustdesk`) and server (`rustdesk-server`) repositories. The active server panel is managed and executed from the `rustdesk-server/web_panel` directory.
+
 ```
 /web_panel
 │   Dockerfile              # Docker packaging configuration
