@@ -1,24 +1,72 @@
 # Data Flow Documentation
 
-## 1. Heartbeat Telemetry Pipeline
-1. **Trigger:** RustDesk client pings the server at configured intervals (default: 30 seconds).
-2. **Endpoint:** Client invokes HTTP POST `/api/heartbeat`.
-3. **Database Write:** Server performs an UPSERT on the `devices` table:
-   ```sql
-   INSERT INTO devices (id, uuid, online, last_seen) VALUES (?, ?, 1, datetime('now'))
-   ON CONFLICT(id) DO UPDATE SET uuid = excluded.uuid, online = 1, last_seen = datetime('now')
-   ```
-4. **Housekeeping:** Stale status triggers update devices whose last seen time is > 30 seconds ago to offline status (`online = 0`).
+## 1. Authentication Flow
 
-## 2. Admin Request Pipeline
-1. **Trigger:** Administrator visits the dashboard `/dashboard` or `/devices`.
-2. **Database Read & Dynamic Calculations:**
-   - Retrieve all devices sorted by last seen timestamp. Dynamic status calculations are executed in memory (GET `/devices`, GET `/api/peers`, GET `/api/admin/devices`) or via SQLite timestamp functions (GET `/dashboard`) to prevent concurrent write locks.
-   - Fetch total device counters and active user lists.
-3. **Jinja2 Rendering:** Inject rows into HTML layouts (using secure JSON escaping) and serve the compiled page to the browser.
-4. **DataTables Filtering:** Client-side DataTable parses the DOM table and filters records by search inputs.
+```mermaid
+sequenceDiagram
+    participant User as Web Browser
+    participant Web as Web Panel (server.py)
+    participant LDAP as LDAP / Active Directory
+    participant DB as SQLite (rustdesk.db)
 
-## 3. Session Authentication
-1. **Login:** Administrator enters username and password.
-2. **Verification:** System checks bcrypt/sha256 hash or tests bind on LDAP server.
-3. **Token:** On success, a JWT token is created and persisted in browser cookie/session storage.
+    User->>Web: Submits credentials
+    alt Local Admin Auth
+        Web->>DB: Query username
+        DB-->>Web: Return password hash
+        Web->>Web: Compare hashes
+    else LDAP Auth enabled
+        Web->>LDAP: Bind request with credentials
+        LDAP-->>Web: Auth Success / Failure
+    end
+    Web-->>User: Redirect to Dashboard / Show error
+```
+
+## 2. Device Registration and Status Monitoring
+1. **Heartbeat**: RustDesk client periodically sends a heartbeat payload containing hostname, current username, OS info, local IP, and client version to `hbbs`.
+2. **Persistence**: `hbbs` writes the connection status, last seen timestamp, and IP coordinates to `rustdesk.db`.
+3. **Rendering**:
+   - The user opens the Web Panel.
+   - `server.py` queries `rustdesk.db` for all devices.
+   - For each device, `server.py` checks if `last_seen` is under 30 seconds ago to flag it as "Online".
+   - Devices table is populated and sorted by last seen date using jQuery DataTables.
+
+## 3. Passwordless Connection Flow
+1. **Request**: The user navigates to the "My Devices" section and clicks "Connect" next to their device.
+2. **Resolution**: The web application retrieves the registered unattended password and the configured ID Server IP address.
+3. **Protocol Launch**: The browser triggers the custom protocol link: `rustdesk://<id>@<server>?password=<encoded_password>`.
+4. **Connection**: The local RustDesk client opens, parses the URL parameters, sets the server IP, passes the password credential automatically, and establishes the remote control session without prompting the user.
+
+## 4. Address Book and Password Sync Flow
+1. **Device Association**: When a user logs in to their account on any RustDesk client device, the client sends an authentication request to the `/api/login` endpoint. The server automatically links the device to the user's account (`devices.user_id = user.id`).
+2. **Address Book Sync**:
+   - The client app queries the address book via `/api/ab/get`.
+   - The server dynamically fetches the user's personal address book data and merges their own devices into the peers list, pre-filling saved passwords.
+   - The client app receives this merged list, meaning all owned devices automatically appear in the client's Address Book.
+3. **Bidirectional Password Update**:
+   - If a user updates the connection password in the client app's address book, the client app posts the update via `POST /api/ab`.
+   - The server intercepts the post, extracts the passwords, and automatically updates the `password` field in the `devices` table for the corresponding devices owned by the user.
+   - If the user edits the password in the Web Panel, it updates the `devices` table, which is automatically included in the next `/api/ab/get` sync payload received by all of the user's clients.
+
+## 5. Forced Automatic Update Flow
+
+```mermaid
+sequenceDiagram
+    participant Client as RustDesk Client (Flutter/Rust)
+    participant UI as Client UI Dialog / Page
+    participant Server as GitHub Releases / Update API
+    participant OS as Operating System Installer (MSI/EXE/APK)
+
+    Client->>Server: Query latest version on startup
+    Server-->>Client: Return version & download URL
+    alt New Version Available
+        Client->>UI: Show non-dismissible "Updating..." screen
+        Client->>Server: Download installer package (EXE/MSI/APK)
+        Server-->>Client: Download complete
+        alt Windows Desktop
+            Client->>OS: Launch installer elevated with UAC --update flag
+            Client->>Client: Terminate process to allow file overwrite
+        else Android Mobile
+            Client->>OS: Launch ACTION_VIEW Intent with package-archive MIME type
+        end
+    end
+```

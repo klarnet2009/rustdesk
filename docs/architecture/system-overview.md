@@ -1,20 +1,29 @@
 # System Overview
 
-## Purpose
-The RustDesk Web Management Panel is a central administrative interface designed for mass management of remote computers. It allows administrators to view the online/offline status, host details, and system specifications of all registered client devices, and connect to them with a single click via custom URL schemes.
+## Purpose of the System
+RustDesk is a full-featured, open-source remote control alternative to TeamViewer or AnyDesk. The system consists of the remote desktop client, ID/Relay server infrastructure (`hbbs` / `hbbr`), and a central Web Management Panel for administrative control.
 
 ## High-Level Architecture
-The system utilizes a split-layer design:
-1. **Frontend UI:** Responsive administrative control panel styled using Tailwind CSS and DaisyUI.
-2. **Backend Server:** Light-weight Flask application exposing endpoints for client heartbeats, system info reporting, and administrator authentication.
-3. **Database Layer:** SQLite database (`rustdesk.db`) storing user accounts, device metadata, audit logs, and connection logs.
+The system consists of three main subsystems:
+1. **RustDesk Client**: The desktop/mobile application used to connect to peers or receive remote support.
+2. **RustDesk Server Components**:
+   - **hbbs (ID Server)**: Authenticates clients, handles connection requests, and acts as the initial coordinate broker.
+   - **hbbr (Relay Server)**: Relays remote connection traffic when a direct peer-to-peer (P2P) connection cannot be established.
+3. **Web Management Panel**: A web-based console allowing administrators to monitor active sessions, manage devices, manage system users, and configure Active Directory/LDAP integration.
+
+## Major Responsibilities of Each Subsystem
+* **hbbs**: Listens for incoming client registrations, keeps track of online status, registers IDs, and generates session coordination keys.
+* **hbbr**: Routes connection traffic between controller and target client when direct routing is unavailable.
+* **Web Panel**: Exposes HTTP/REST APIs and Jinga/HTML views to view audit logs, manage devices, query connection histories, configure system-wide parameters, and manage security settings.
 
 ## Technology Stack
-- **Language:** Python 3.x
-- **Web Framework:** Flask
-- **Styling Framework:** Tailwind CSS & DaisyUI
-- **Database:** SQLite
-- **Authentication:** JSON Web Tokens (JWT) / LDAP Active Directory integration
+* **Core Servers (hbbs/hbbr)**: Written in Rust for maximum speed, security, and safety.
+* **Web Management Panel**:
+  - **Backend**: Python 3 and Flask. SQLite database for user/device metadata persistence. PyJWT for auth token validation.
+  - **Frontend**: DaisyUI v4, Tailwind CSS v3, and HTML5. Icons provided by Lucide. Dynamic charts powered by Chart.js. jQuery DataTables for paginated lists.
 
 ## Architectural Philosophy
-The system prioritizes simplicity, low resource overhead, and responsiveness. Direct database queries, local assets compile, and stateless sessions allow hosting the management panel on minimal hardware without external dependency requirements.
+Our architectural philosophy prioritizes simplicity, clean boundaries, and zero-compromise design:
+* **Consolidation**: Eliminating duplication by having a single, unified web panel hosted exclusively on the server side (`rustdesk-server/web_panel`), removing all client-side duplicates.
+* **Visual Excellence**: Employing DaisyUI themes and Vercel Web Interface Guidelines for professional, accessible, and high-performance user interfaces.
+* **Security & Transparency**: Structured logging, proper database path isolation, and clean authentication layers.

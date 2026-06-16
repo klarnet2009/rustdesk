@@ -1,24 +1,46 @@
 # Extension Guide
 
-Follow these steps to safely add new views or endpoints to the RustDesk Web Management Panel.
+## How to Add a New Page to the Web Panel
 
-## 1. Adding a New Page View
-1. Define the HTML string template variable inside `web_panel/server.py`. Inherit the base template using `{% extends "base" %}`.
-2. Ensure components utilize DaisyUI visual classes.
-3. Register a new web route inside `server.py` decorated with `@web_login_required`:
-   ```python
-   @app.route('/my-new-page')
-   @web_login_required
-   def web_new_page():
-       return render_page(NEW_PAGE_HTML, title='New Page', active_page='new_page')
-   ```
-4. If you introduce new styles or custom CSS classes, compile the stylesheet:
-   ```bash
-   cd web_panel
-   npm run build
-   ```
+Follow these steps to add a new view (e.g. `Reports` page) to the panel:
 
-## 2. Extending the Database Schema
-1. Modify `init_db()` inside `server.py` to declare new table creation or alter queries.
-2. Keep in mind that SQLite is embedded; avoid using features unsupported by SQLite engine versions.
-3. Make sure to run `init_db()` on startup to apply migrations.
+### Step 1: Update Nav Links in BASE_HTML
+Open `server.py`, find the template string `BASE_HTML`, and append a new list item to the navbar sidebar list:
+```html
+<li>
+    <a class="{{ 'active bg-primary text-primary-content font-semibold' if active_page == 'reports' else '' }}" href="{{ url_for('web_reports') }}">
+        <i data-lucide="bar-chart-2" class="w-5 h-5" aria-hidden="true"></i>
+        Reports
+    </a>
+</li>
+```
+
+### Step 2: Define the HTML Template constant
+Add a new template constant (e.g. `REPORTS_HTML`) under the `TEMPLATES` comment block:
+```python
+REPORTS_HTML = r'''
+{% extends "base" %}
+{% block content %}
+<h1 class="text-2xl font-bold text-base-content text-balance mb-6">Reports</h1>
+<div class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-6">
+        <p class="text-base-content/80">Report content goes here…</p>
+    </div>
+</div>
+{% endblock %}
+'''
+```
+
+### Step 3: Implement the Route Controller
+Define a new Flask routing function:
+```python
+@app.route('/reports')
+@web_login_required
+def web_reports():
+    # Fetch parameters or write logic here
+    return render_page(REPORTS_HTML, title="Reports", active_page="reports")
+```
+
+### Step 4: Verify Compilation and UI Compliance
+1. Run `python -m py_compile server.py` to check for syntax issues.
+2. Verify that any buttons, tables, or fields added meet the [Coding Standards](file:///D:/rustdesk_src/docs/development/coding-standards.md) (accessible labels, tabular numbers, correct headers, loaders).

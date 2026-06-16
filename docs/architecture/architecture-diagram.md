@@ -1,36 +1,40 @@
-# Architecture Diagram
+# Architecture Diagram & Component Interaction
 
-The diagram below outlines the communication flows between the RustDesk client devices, the Web Panel server, and the administrator browser.
+## Component Diagram
+
+The following diagram shows how RustDesk clients interact with the ID/Relay server and how the Web Management Panel manages the system database and components:
 
 ```mermaid
 graph TD
-    subgraph Client ["Remote Client Devices"]
-        RC1[RustDesk Client]
-        RC2[RustDesk Client]
+    subgraph Clients
+        C1[RustDesk Client A - Controller]
+        C2[RustDesk Client B - Target]
     end
 
-    subgraph Server ["Web Panel Server"]
-        FP[Flask API Handler]
-        DB[(SQLite DB: rustdesk.db)]
-        LDAP[LDAP/AD Server]
+    subgraph Server Infrastructure [RustDesk Server]
+        hbbs[hbbs: ID Server]
+        hbbr[hbbr: Relay Server]
+        wp[Web Management Panel - Flask]
+        db[(rustdesk.db - SQLite)]
     end
 
-    subgraph Admin ["Administrator Browser"]
-        WP[Admin Web Panel]
-    end
+    C1 <-->|1. ID Registration & Query| hbbs
+    C2 <-->|1. ID Registration| hbbs
+    C1 <-->|2. Relay Connection| hbbr
+    C2 <-->|2. Relay Connection| hbbr
 
-    RC1 -- "/api/heartbeat (POST)" --> FP
-    RC2 -- "/api/sysinfo (POST)" --> FP
-    FP -- "Updates Status & System Info" --> DB
-    
-    WP -- "Fetches Pages & Devices List" --> FP
-    FP -- "Query Devices & Logs" --> DB
-    FP -- "Authenticate Admin" --> LDAP
-    
-    WP -- "Click Connect (rustdesk://)" --> RC1
+    wp <-->|Read/Write Auth, Devices, Logs| db
+    hbbs <-->|Read/Write Session metadata| db
 ```
 
 ## Communication Patterns
-1. **Device Heartbeats:** Background pings occur asynchronously from clients directly to the server's HTTP endpoints.
-2. **Web Operations:** Synchronous requests from the administrator browser to retrieve HTML templates populated with SQLite data.
-3. **Connection launcher:** Browser triggers URI scheme `rustdesk://connection/new/<device_id>`, invoking the local RustDesk desktop application directly.
+
+### 1. Peer-to-Peer vs Relayed Connections
+* **Registration**: Upon startup, both clients contact `hbbs` to register their unique IDs and announce their presence.
+* **Direct Coordination**: When Client A requests connection to Client B, it queries `hbbs` for Client B's address. `hbbs` attempts to coordinate a direct hole-punching UDP connection.
+* **Relay Fallback**: If a direct connection cannot be negotiated (due to symmetric NATs/firewalls), `hbbs` instructs both clients to establish connection paths through the `hbbr` relay server.
+
+### 2. Web Management Coordination
+* The **Web Management Panel** acts as the user interface for `rustdesk.db`.
+* Administrators log in using the panel. The panel communicates directly with SQLite database `rustdesk.db` located at an absolute, isolated file path, preventing split/duplicate databases.
+* The backend exposes REST APIs (`/api/devices`, `/api/admin/users/*`) and renders HTML views using Flask template rendering.

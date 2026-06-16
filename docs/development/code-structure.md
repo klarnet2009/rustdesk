@@ -1,29 +1,36 @@
-# Code Structure Guide
+# Codebase Navigation Guide
 
-This guide maps where the key components of the RustDesk Web Management Panel live.
-
-> [!NOTE]
-> The `/web_panel` directory exists in both client (`rustdesk`) and server (`rustdesk-server`) repositories. The active server panel is managed and executed from the `rustdesk-server/web_panel` directory.
+## Directory Layout
 
 ```
-/web_panel
-│   Dockerfile              # Docker packaging configuration
-│   ldap_auth.py            # LDAP Active Directory bind helper logic
-│   package.json            # Node dev dependencies and Tailwind compile commands
-│   requirements.txt        # Python pip library dependencies
-│   server.py               # Main Flask web app containing routing and HTML strings
-│   tailwind.config.js      # Styling themes, colors, and layout mappings
-│
-├───src
-│       input.css           # Styling entrypoint utilizing @tailwind layers
-│
-└───static
-        output.css          # Output asset containing compiled CSS
+D:/rustdesk_src/
+  ├── docs/                        # Architecture & system documentation
+  ├── rustdesk-server/             # RustDesk server component codebase
+  │   ├── libs/                    # Shared libraries
+  │   ├── src/                     # Rust source code (hbbs/hbbr)
+  │   └── web_panel/               # Server-side Web Management Panel
+  └── rustdesk/                    # RustDesk client codebase
+      ├── src/                     # Rust source code
+      │   ├── common.rs            # Core client utilities and update check triggers
+      │   ├── updater.rs           # Windows background updater service
+      │   └── flutter_ffi.rs       # Rust-Flutter FFI bindings (update-me key handler, Windows SSPI SSO collector)
+      └── flutter/                 # Flutter UI application codebase
+          ├── lib/
+          │   ├── main.dart        # Client entry point (launches update check)
+          │   ├── common.dart      # Common client state, handles update events
+          │   ├── widgets/
+          │   │   └── update_dialog.dart # Mobile Update Dialog & Controller
+          │   └── desktop/
+          │       └── widgets/
+          │           └── update_progress.dart # Desktop Update progress widget
+          └── android/             # Android Kotlin source files
+              └── app/src/.../UpdateService.kt # Kotlin APK downloader and installer
 ```
 
-## Key Files & Entry Points
-1. **Entry Point:** [web_panel/server.py](file:///D:/rustdesk_src/rustdesk/web_panel/server.py)
-   - Contains SQLite initialization, routing, request filters, and API endpoints.
-   - Contains all template views (`BASE_HTML`, `DASHBOARD_HTML`, etc.) represented as inline variables.
-2. **Build Configurations:** [web_panel/package.json](file:///D:/rustdesk_src/rustdesk/web_panel/package.json)
-   - Defines standard build target: `npm run build` generates output styles.
+## Major Entry Points
+* **hbbs/hbbr**: Starting binary compilations from `rustdesk-server/Cargo.toml`.
+* **Web Panel**: `rustdesk-server/web_panel/server.py` is the execution target for Flask.
+
+## Configuration Files
+* **Tailwind**: `tailwind.config.js` defines templates paths and configures the default DaisyUI theme settings (`corporate` light / `business` dark mode).
+* **Flask Config**: `server.py` reads global parameters (`HOST`, `PORT`, `DB_PATH`, `JWT_SECRET`) from environmental variables, falling back to secure defaults.
