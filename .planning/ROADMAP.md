@@ -9,6 +9,7 @@ This roadmap defines the path to overhaul the RustDesk Web Management Panel UI u
 - [x] **Phase 1: Tailwind & DaisyUI UI Migration** - Redesign dashboard and all administration views using DaisyUI.
 - [x] **Phase 2: Device Discovery & Heartbeat Audit** - Audit and fix device list/heartbeat APIs to ensure all online client devices are reliably registered.
 - [x] **Phase 3: Connection flow & Integration check** - Integrate client-side launcher scheme and document configuration.
+- [x] **Phase 4: Passwordless Connection & Same-Account Login** - Implement auto-association, address book tagging, same-account host authorization, and client password prompt bypass.
 
 ## Phase Details
 
@@ -53,6 +54,20 @@ Plans:
 Plans:
 - [x] 03-01: Connect button integration and user documentation.
 
+### Phase 4: Passwordless Connection & Same-Account Login
+**Goal**: Implement passwordless connection for client devices logged into the same account, with automatic device association and client-side password prompt bypass.
+**Depends on**: Phase 3
+**Requirements**: ACCT-01, ACCT-02
+**Success Criteria**:
+  1. Login and currentUser API calls automatically link client device IDs to the user account in the SQLite database.
+  2. The server's currentUser endpoint returns the required verifier field to enable client login.
+  3. The server's address book endpoint merges owned devices and tags them with the 'same-account' tag.
+  4. The client's connection manager detects the 'same-account' tag and bypasses the password entry dialog, successfully connecting passwordlessly via same-account token verification.
+**Plans**: 1 plan
+
+Plans:
+- [x] 04-01: Implement auto-association, address book tagging, same-account host authorization, and client password prompt bypass.
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -60,6 +75,7 @@ Plans:
 | 1. Tailwind & DaisyUI UI Migration | 3/3 | Completed | 2026-06-16 |
 | 2. Device Discovery & Heartbeat Audit | 2/2 | Completed | 2026-06-16 |
 | 3. Connection flow & Integration check | 1/1 | Completed | 2026-06-16 |
+| 4. Passwordless Connection & Same-Account Login | 1/1 | Completed | 2026-06-16 |
 
 ---
 *Roadmap defined: 2026-06-16*

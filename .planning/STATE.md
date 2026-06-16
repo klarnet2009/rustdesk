@@ -20,6 +20,7 @@ See: [.planning/PROJECT.md](file:///D:/rustdesk_src/rustdesk/.planning/PROJECT.m
 | 1. Tailwind & DaisyUI UI Migration | v1.0 MVP | 3/3 | Completed | 2026-06-16 |
 | 2. Device Discovery & Heartbeat Audit | v1.0 MVP | 2/2 | Completed | 2026-06-16 |
 | 3. Connection flow & Integration check | v1.0 MVP | 1/1 | Completed | 2026-06-16 |
+| 4. Passwordless Connection & Same-Account Login | v2.0 | 1/1 | Completed | 2026-06-16 |
 
 ---
 *State updated: 2026-06-16*

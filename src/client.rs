@@ -3522,9 +3522,25 @@ pub async fn handle_hash(
         return;
     }
 
+    let mut is_same_account = false;
+    let access_token = LocalConfig::get_option("access_token");
+    if !access_token.is_empty() {
+        let ab = config::Ab::load();
+        if access_token == ab.access_token {
+            let id = lc.read().unwrap().id.clone();
+            if let Some(personal_ab) = ab.ab_entries.iter().find(|a| a.personal()) {
+                if let Some(p) = personal_ab.peers.iter().find(|p| p.id == id) {
+                    is_same_account = p.tags.contains(&"same-account".to_string());
+                }
+            }
+        }
+    }
+
     let password = if password.is_empty() {
-        // login without password, the remote side can click accept
-        interface.msgbox("input-password", "Password Required", "", "");
+        if !is_same_account {
+            // login without password, the remote side can click accept
+            interface.msgbox("input-password", "Password Required", "", "");
+        }
         Vec::new()
     } else {
         let mut hasher = Sha256::new();
