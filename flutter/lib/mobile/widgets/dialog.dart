@@ -128,17 +128,15 @@ void showServerSettingsWithValue(
             ),
             SizedBox(width: 8),
             Expanded(
-              child: TextFormField(
+              child: serverSettingsTextFormField(
+                label: label,
                 controller: controller,
+                errorMsg: errorMsg,
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                showLabelText: false,
                 readOnly: readOnly,
                 enabled: !readOnly,
-                decoration: InputDecoration(
-                  errorText: errorMsg.isEmpty ? null : errorMsg,
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                  filled: readOnly,
-                  fillColor: readOnly ? Colors.grey.withOpacity(0.1) : null,
-                ),
                 validator: validator,
                 autofocus: autofocus && !readOnly,
               ).workaroundFreezeLinuxMint(),
@@ -147,16 +145,12 @@ void showServerSettingsWithValue(
         );
       }
 
-      return TextFormField(
+      return serverSettingsTextFormField(
+        label: label,
         controller: controller,
+        errorMsg: errorMsg,
         readOnly: readOnly,
         enabled: !readOnly,
-        decoration: InputDecoration(
-          labelText: label,
-          errorText: errorMsg.isEmpty ? null : errorMsg,
-          filled: readOnly,
-          fillColor: readOnly ? Colors.grey.withOpacity(0.1) : null,
-        ),
         validator: validator,
       ).workaroundFreezeLinuxMint();
     }
@@ -233,6 +227,41 @@ void showServerSettingsWithValue(
             ],
     );
   });
+}
+
+TextFormField serverSettingsTextFormField({
+  required String label,
+  required TextEditingController controller,
+  required String errorMsg,
+  String? Function(String?)? validator,
+  bool autofocus = false,
+  bool showLabelText = true,
+  EdgeInsetsGeometry? contentPadding,
+  bool readOnly = false,
+  bool enabled = true,
+}) {
+  return TextFormField(
+    controller: controller,
+    readOnly: readOnly,
+    enabled: enabled,
+    decoration: InputDecoration(
+      labelText: showLabelText ? label : null,
+      errorText: errorMsg.isEmpty ? null : errorMsg,
+      contentPadding: contentPadding,
+      filled: readOnly,
+      fillColor: readOnly ? Colors.grey.withOpacity(0.1) : null,
+    ),
+    validator: validator,
+    autofocus: autofocus,
+    keyboardType: TextInputType.visiblePassword,
+    textCapitalization: TextCapitalization.none,
+    autocorrect: false,
+    enableSuggestions: false,
+    smartDashesType: SmartDashesType.disabled,
+    smartQuotesType: SmartQuotesType.disabled,
+    enableIMEPersonalizedLearning: false,
+    spellCheckConfiguration: const SpellCheckConfiguration.disabled(),
+  );
 }
 
 void setPrivacyModeDialog(

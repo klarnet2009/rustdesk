@@ -292,7 +292,7 @@ checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
 [[package]]
 name = "arboard"
 version = "3.4.0"
-source = "git+https://github.com/rustdesk-org/arboard#85be1218668ff218a7b170c9d424fde73e069914"
+source = "git+https://github.com/rustdesk-org/arboard#c7d5781f563176df9efd8df6287e823fb1b9bed5"
 dependencies = [
  "clipboard-win",
  "core-graphics 0.23.2",
@@ -7270,7 +7270,7 @@ dependencies = [
 
 [[package]]
 name = "rustdesk"
-version = "1.4.6"
+version = "1.4.7"
 dependencies = [
  "android-wakelock",
  "android_logger",
@@ -7385,7 +7385,7 @@ dependencies = [
 
 [[package]]
 name = "rustdesk-portable-packer"
-version = "1.4.6"
+version = "1.4.7"
 dependencies = [
  "brotli",
  "dirs 5.0.1",

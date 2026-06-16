@@ -30,8 +30,11 @@ use cidr_utils::cidr::IpCidr;
 #[cfg(target_os = "android")]
 use hbb_common::protobuf::EnumOrUnknown;
 use hbb_common::{
-    config::decode_permanent_password_h1_from_storage,
-    config::{self, keys, Config, TrustedDevice},
+    config::{
+        self, decode_permanent_password_h1_from_storage, decode_preset_password_h1_from_storage,
+        keys, local_permanent_password_storage_is_usable_for_auth,
+        preset_permanent_password_storage_is_usable_for_auth, Config, TrustedDevice,
+    },
     fs::{self, can_enable_overwrite_detection, JobType},
     futures::{SinkExt, StreamExt},
     get_time, get_version_number,
@@ -412,8 +415,9 @@ impl Connection {
         let _raii_id = raii::ConnectionID::new(id);
         let _raii_control_permissions_id =
             raii::ControlPermissionsID::new(id, &control_permissions);
+        let salt = Config::get_effective_permanent_password_salt();
         let hash = Hash {
-            salt: Config::get_salt(),
+            salt,
             challenge: Config::get_auto_password(6),
             ..Default::default()
         };
@@ -2146,6 +2150,16 @@ impl Connection {
         self.validate_password_plain(storage)
     }
 
+    fn validate_preset_password_storage(&self, storage: &str, salt: &str) -> bool {
+        if salt.is_empty() {
+            return self.validate_password_plain(storage);
+        }
+        let Some(h1) = decode_preset_password_h1_from_storage(storage) else {
+            return false;
+        };
+        self.verify_h1(&h1[..])
+    }
+
     // This is coarse brute-force protection for the current temporary password value.
     // We only care whether the active temporary password itself was presented correctly,
     // not whether later authorization steps succeed. A successful temporary-password
@@ -2217,23 +2231,22 @@ impl Connection {
                     log::info!("Permanent password accepted via logon-screen fallback");
                 }
             };
-            // Since hashed storage uses a prefix-based encoding, a hard plaintext that
-            // happens to look like hashed storage could be mis-detected. Validate local storage
-            // and hard/preset plaintext via separate paths to avoid that ambiguity.
-            let (local_storage, _) = Config::get_local_permanent_password_storage_and_salt();
+            // Strictly check storage usability before auth so malformed encrypted/hash storage
+            // cannot fall back to being accepted as legacy plaintext.
+            let (local_storage, local_salt) =
+                Config::get_local_permanent_password_storage_and_salt();
             if !local_storage.is_empty() {
-                if self.validate_password_storage(&local_storage) {
+                if local_permanent_password_storage_is_usable_for_auth(&local_storage, &local_salt)
+                    && self.validate_password_storage(&local_storage)
+                {
                     print_fallback();
                     return true;
                 }
             } else {
-                let hard = config::HARD_SETTINGS
-                    .read()
-                    .unwrap()
-                    .get("password")
-                    .cloned()
-                    .unwrap_or_default();
-                if !hard.is_empty() && self.validate_password_plain(&hard) {
+                let (hard, salt) = Config::get_preset_password_storage_and_salt();
+                if preset_permanent_password_storage_is_usable_for_auth(&hard, &salt)
+                    && self.validate_preset_password_storage(&hard, &salt)
+                {
                     print_fallback();
                     return true;
                 }
@@ -2927,7 +2940,7 @@ impl Connection {
                     self.update_auto_disconnect_timer();
                 }
                 Some(message::Union::Clipboard(cb)) => {
-                    if self.clipboard {
+                    if self.clipboard_enabled() {
                         #[cfg(not(any(target_os = "android", target_os = "ios")))]
                         update_clipboard(vec![cb], ClipboardSide::Host);
                         // ios as the controlled side is actually not supported for now.
@@ -2955,12 +2968,12 @@ impl Connection {
                     }
                 }
                 Some(message::Union::MultiClipboards(_mcb)) => {
-                    #[cfg(not(any(target_os = "android", target_os = "ios")))]
-                    if self.clipboard {
+                    if self.clipboard_enabled() {
+                        #[cfg(not(any(target_os = "android", target_os = "ios")))]
                         update_clipboard(_mcb.clipboards, ClipboardSide::Host);
+                        #[cfg(target_os = "android")]
+                        crate::clipboard::handle_msg_multi_clipboards(_mcb);
                     }
-                    #[cfg(target_os = "android")]
-                    crate::clipboard::handle_msg_multi_clipboards(_mcb);
                 }
                 #[cfg(any(target_os = "windows", feature = "unix-file-copy-paste"))]
                 Some(message::Union::Cliprdr(clip)) => {
