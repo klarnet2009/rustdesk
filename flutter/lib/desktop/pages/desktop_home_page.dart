@@ -858,6 +858,20 @@ class _DesktopHomePageState extends State<DesktopHomePage>
       });
     }
     WidgetsBinding.instance.addObserver(this);
+
+    ever(stateGlobal.updateUrl, (String url) {
+      if (url.isNotEmpty && (isWindows || isMacOS) && bind.mainIsInstalled()) {
+        stateGlobal.isForcedUpdating.value = true;
+        handleUpdate(url);
+      }
+    });
+
+    if (stateGlobal.updateUrl.value.isNotEmpty && (isWindows || isMacOS) && bind.mainIsInstalled()) {
+      stateGlobal.isForcedUpdating.value = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        handleUpdate(stateGlobal.updateUrl.value);
+      });
+    }
   }
 
   _updateWindowSize() {

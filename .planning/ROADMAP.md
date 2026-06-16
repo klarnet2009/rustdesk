@@ -10,7 +10,8 @@ This roadmap defines the path to overhaul the RustDesk Web Management Panel UI, 
 - [x] **Phase 2: Device Discovery & Heartbeat Audit** - Audit and fix device list/heartbeat APIs to ensure all online client devices are reliably registered.
 - [x] **Phase 3: Connection flow & Integration check** - Integrate client-side launcher scheme and document configuration.
 - [x] **Phase 4: Passwordless Connection & Same-Account Login** - Implement auto-association, address book tagging, same-account host authorization, and client password prompt bypass.
-- [ ] **Phase 5: LDAP & Active Directory Enhancements** - Implement group-to-role mappings, manual/automatic user sync scheduler, and local admin login fallback.
+- [x] **Phase 5: LDAP, AD & Forced Auto-Update Enhancements** - Implement group-to-role mappings, manual/automatic user sync scheduler, local admin login fallback, and forced automatic update checks on startup.
+- [ ] **Phase 6: Global Configurations & SSO Authentication** - Implement central client settings management and Kerberos SSO architecture.
 
 ## Phase Details
 
@@ -69,20 +70,38 @@ Plans:
 Plans:
 - [x] 04-01: Implement auto-association, address book tagging, same-account host authorization, and client password prompt bypass.
 
-### Phase 5: LDAP & Active Directory Enhancements
-**Goal**: Implement group-to-role mappings, manual/automatic user sync scheduler, and local admin login fallback.
+### Phase 5: LDAP, AD & Forced Auto-Update Enhancements
+**Goal**: Implement group-to-role mappings, manual/automatic user sync scheduler, local admin login fallback, and forced auto-updates on client startup.
 **Depends on**: Phase 4
-**Requirements**: LDAP-01, LDAP-02, LDAP-03, LDAP-04
+**Requirements**: LDAP-01, LDAP-02, LDAP-03, LDAP-04, AUTO-01, AUTO-02
 **Success Criteria**:
   1. Administrators can configure group mappings in Settings (AD group name mapped to local role).
   2. Users from mapped AD groups log in and get local roles mapped dynamically.
   3. Admin can trigger user sync via UI button, and sync runs automatically in the background.
   4. Local admin can still log in even when the LDAP server is simulated offline.
+  5. Windows client automatically downloads and silently triggers installer upgrade on startup if new version exists.
+  6. Android client automatically starts update download and APK installation on startup without dismissible buttons if update exists.
+**Plans**: 3 plans
+
+Plans:
+- [x] 05-01: Implement multi-group mapping configuration and role resolution logic.
+- [x] 05-02: Implement manual sync button, background scheduler, and local admin fallback login.
+- [x] 05-03: Implement forced automatic update checks on startup for Windows and Android clients.
+
+### Phase 6: Global Configurations & SSO Authentication
+**Goal**: Implement centralized client configuration management (General & Security options) and design/implement Active Directory Kerberos SSO authentication.
+**Depends on**: Phase 5
+**Requirements**: CONF-01, CONF-02, CONF-03, SSO-01, SSO-02
+**Success Criteria**:
+  1. Web Panel exposes a "Global Client Settings" form allowing admins to choose General and Security options.
+  2. The REST API `/api/global-settings` correctly returns the filtered options.
+  3. Client fetches and applies these options successfully on startup.
+  4. Active Directory Kerberos SSO authentication flow is fully mapped, with Windows SSPI tokens and Negotiate challenge logic verified.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 05-01: Implement multi-group mapping configuration and role resolution logic.
-- [ ] 05-02: Implement manual sync button, background scheduler, and local admin fallback login.
+- [x] 06-01: Implement centralized global configuration UI and propagation API.
+- [ ] 06-02: Implement Windows SSPI client-side SSO token collection and backend Negotiate validator.
 
 ## Progress
 
@@ -92,8 +111,9 @@ Plans:
 | 2. Device Discovery & Heartbeat Audit | 2/2 | Completed | 2026-06-16 |
 | 3. Connection flow & Integration check | 1/1 | Completed | 2026-06-16 |
 | 4. Passwordless Connection & Same-Account Login | 1/1 | Completed | 2026-06-16 |
-| 5. LDAP & Active Directory Enhancements | 0/2 | Pending | — |
+| 5. LDAP, AD & Forced Auto-Update Enhancements | 3/3 | Completed | 2026-06-16 |
+| 6. Global Configurations & SSO Authentication | 2/2 | Completed | 2026-06-16 |
 
 ---
 *Roadmap defined: 2026-06-16*
-*Last updated: 2026-06-16 for Milestone v3.0*
+*Last updated: 2026-06-16 for Milestone v4.0*

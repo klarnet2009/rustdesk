@@ -36,7 +36,7 @@ void handleUpdate(String releasePageUrl) {
                 .marginSymmetric(horizontal: 8)
                 .paddingOnly(top: 12),
         actions: [
-          if (_isExtracting.isFalse) dialogButton(translate('Cancel'), onPressed: () async {
+          if (_isExtracting.isFalse && !stateGlobal.isForcedUpdating.value) dialogButton(translate('Cancel'), onPressed: () async {
             onCanceled.value();
             await bind.mainSetCommon(
                 key: 'cancel-downloader', value: downloadId.value);
@@ -217,7 +217,12 @@ class UpdateProgressState extends State<UpdateProgress> {
                 key: 'extract-update-dmg', value: widget.downloadUrl);
             _isExtracting.value = true;
           } else {
-            updateMsgBox();
+            if (stateGlobal.isForcedUpdating.value) {
+              debugPrint('Downloaded, forced update to new version now');
+              bind.mainSetCommon(key: 'update-me', value: widget.downloadUrl);
+            } else {
+              updateMsgBox();
+            }
           }
         }
       } else {
@@ -247,7 +252,12 @@ class UpdateProgressState extends State<UpdateProgress> {
     if (evt.containsKey('err') && (evt['err'] as String).isNotEmpty) {
       _onError(evt['err'] as String, isExtractDmg: true);
     } else {
-      updateMsgBox();
+      if (stateGlobal.isForcedUpdating.value) {
+        debugPrint('Extracted, forced update to new version now');
+        bind.mainSetCommon(key: 'update-me', value: widget.downloadUrl);
+      } else {
+        updateMsgBox();
+      }
     }
   }
 

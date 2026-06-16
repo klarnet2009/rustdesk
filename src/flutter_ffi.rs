@@ -1070,6 +1070,174 @@ pub fn main_set_options(json: String) {
     }
 }
 
+pub fn main_get_sso_token(spn: String) -> String {
+    #[cfg(target_os = "windows")]
+    {
+        match sspi::get_negotiate_token(&spn) {
+            Ok(token) => token,
+            Err(e) => {
+                log::error!("Failed to get Windows SSPI SSO token: {}", e);
+                "".to_string()
+            }
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = spn;
+        "".to_string()
+    }
+}
+
+#[cfg(target_os = "windows")]
+mod sspi {
+    use std::ffi::OsStr;
+    use std::os::windows::ffi::OsStrExt;
+    use std::ptr;
+    use std::slice;
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    pub struct CredHandle {
+        dwLower: usize,
+        dwUpper: usize,
+    }
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    pub struct SecBuffer {
+        cbBuffer: u32,
+        BufferType: u32,
+        pvBuffer: *mut std::ffi::c_void,
+    }
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    pub struct SecBufferDesc {
+        ulVersion: u32,
+        cBuffers: u32,
+        pBuffers: *mut SecBuffer,
+    }
+
+    const SECPKG_CRED_OUTBOUND: u32 = 2;
+    const SECBUFFER_TOKEN: u32 = 2;
+    const SECBUFFER_VERSION: u32 = 0;
+    const ISC_REQ_MUTUAL_AUTH: u32 = 0x00000002;
+    const SEC_I_CONTINUE_NEEDED: i32 = 0x00090312;
+    const SEC_E_OK: i32 = 0;
+
+    #[link(name = "secur32")]
+    extern "system" {
+        fn AcquireCredentialsHandleW(
+            pszPrincipal: *const u16,
+            pszPackage: *const u16,
+            fCredentialUse: u32,
+            pvLogonID: *const std::ffi::c_void,
+            pAuthData: *const std::ffi::c_void,
+            pGetKeyFn: *const std::ffi::c_void,
+            pvGetKeyArgument: *const std::ffi::c_void,
+            phCredential: *mut CredHandle,
+            ptsExpiry: *mut i64,
+        ) -> i32;
+
+        fn InitializeSecurityContextW(
+            phCredential: *const CredHandle,
+            phContext: *const CredHandle,
+            pszTargetName: *const u16,
+            fContextReq: u32,
+            Reserved1: u32,
+            TargetDataRep: u32,
+            pInput: *const SecBufferDesc,
+            Reserved2: u32,
+            phNewContext: *mut CredHandle,
+            pOutput: *mut SecBufferDesc,
+            pfContextAttr: *mut u32,
+            ptsExpiry: *mut i64,
+        ) -> i32;
+
+        fn FreeCredentialsHandle(phCredential: *const CredHandle) -> i32;
+        fn DeleteSecurityContext(phContext: *const CredHandle) -> i32;
+        fn FreeContextBuffer(pvContextBuffer: *mut std::ffi::c_void) -> i32;
+    }
+
+    pub fn get_negotiate_token(spn: &str) -> Result<String, String> {
+        unsafe {
+            let mut creds = CredHandle { dwLower: 0, dwUpper: 0 };
+            let mut expiry: i64 = 0;
+            let mut package: Vec<u16> = OsStr::new("Negotiate").encode_wide().collect();
+            package.push(0);
+
+            let status = AcquireCredentialsHandleW(
+                ptr::null(),
+                package.as_ptr(),
+                SECPKG_CRED_OUTBOUND,
+                ptr::null(),
+                ptr::null(),
+                ptr::null(),
+                ptr::null(),
+                &mut creds,
+                &mut expiry,
+            );
+
+            if status != 0 {
+                return Err(format!("AcquireCredentialsHandleW failed with status {}", status));
+            }
+
+            let mut new_ctx = CredHandle { dwLower: 0, dwUpper: 0 };
+            let mut ctx_attr: u32 = 0;
+            let mut spn_wide: Vec<u16> = OsStr::new(spn).encode_wide().collect();
+            spn_wide.push(0);
+
+            let mut out_sec_buffer = SecBuffer {
+                cbBuffer: 0,
+                BufferType: SECBUFFER_TOKEN,
+                pvBuffer: ptr::null_mut(),
+            };
+
+            let mut out_buffer_desc = SecBufferDesc {
+                ulVersion: SECBUFFER_VERSION,
+                cBuffers: 1,
+                pBuffers: &mut out_sec_buffer,
+            };
+
+            let status = InitializeSecurityContextW(
+                &creds,
+                ptr::null(),
+                spn_wide.as_ptr(),
+                ISC_REQ_MUTUAL_AUTH,
+                0,
+                0,
+                ptr::null(),
+                0,
+                &mut new_ctx,
+                &mut out_buffer_desc,
+                &mut ctx_attr,
+                &mut expiry,
+            );
+
+            if status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED {
+                FreeCredentialsHandle(&creds);
+                return Err(format!("InitializeSecurityContextW failed with status {}", status));
+            }
+
+            let token_base64 = if !out_sec_buffer.pvBuffer.is_null() && out_sec_buffer.cbBuffer > 0 {
+                let bytes = slice::from_raw_parts(out_sec_buffer.pvBuffer as *const u8, out_sec_buffer.cbBuffer as usize);
+                let b64 = hbb_common::base64::encode(bytes);
+                FreeContextBuffer(out_sec_buffer.pvBuffer);
+                b64
+            } else {
+                "".to_string()
+            };
+
+            if status == SEC_I_CONTINUE_NEEDED || status == SEC_E_OK {
+                DeleteSecurityContext(&new_ctx);
+            }
+            FreeCredentialsHandle(&creds);
+
+            Ok(token_base64)
+        }
+    }
+}
+
 pub fn main_test_if_valid_server(server: String, test_with_proxy: bool) -> String {
     test_if_valid_server(server, test_with_proxy)
 }
@@ -3140,5 +3308,26 @@ pub mod server_side {
         _class: JClass,
     ) -> jboolean {
         jboolean::from(crate::server::is_clipboard_service_ok())
+    }
+}
+
+#[cfg(test)]
+mod sspi_tests {
+    use super::*;
+
+    #[test]
+    fn test_sso_token_generation() {
+        #[cfg(not(target_os = "windows"))]
+        {
+            let token = main_get_sso_token("HTTP/localhost".to_string());
+            assert_eq!(token, "");
+        }
+
+        #[cfg(target_os = "windows")]
+        {
+            // Verify that calling the FFI on Windows does not crash or panic
+            let token = main_get_sso_token("HTTP/localhost".to_string());
+            println!("Generated token: {}", token);
+        }
     }
 }

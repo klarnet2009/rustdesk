@@ -28,6 +28,7 @@ import 'consts.dart';
 import 'mobile/pages/home_page.dart';
 import 'mobile/pages/server_page.dart';
 import 'mobile/widgets/deploy_dialog.dart';
+import 'widgets/update_dialog.dart';
 import 'models/platform_model.dart';
 
 import 'package:flutter_hbb/plugin/handlers.dart'
@@ -181,8 +182,15 @@ void runMainApp(bool startService) async {
 void runMobileApp() async {
   await initEnv(kAppTypeMain);
   checkUpdate();
-  if (isAndroid) androidChannelInit();
-  if (isAndroid) platformFFI.syncAndroidServiceAppDirConfigPath();
+  if (isAndroid) {
+    androidChannelInit();
+    platformFFI.syncAndroidServiceAppDirConfigPath();
+    stateGlobal.isForcedUpdating.value = true;
+    final updateController = Get.put(UpdateDialogController());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      updateController.checkForUpdates();
+    });
+  }
   draggablePositions.load();
   await Future.wait([gFFI.abModel.loadCache(), gFFI.groupModel.loadCache()]);
   gFFI.userModel.refreshCurrentUser();

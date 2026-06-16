@@ -27,12 +27,23 @@
 - ✓ **ACCT-01**: Same-account remote connection passwordless handshake authentication on Windows and Android.
 - ✓ **ACCT-02**: Automatic mapping of device ID and UUID to the logged-in user on login/currentUser API calls.
 
-## Active Requirements (v3.0 - LDAP Enhancements)
+### LDAP & Auto-Update Enhancements - v3.0
+- ✓ **LDAP-01**: Implement configurable group-to-role mappings in Settings (e.g. AD group `Domain Admins` maps to Admin role, others map to User role).
+- ✓ **LDAP-02**: Implement manual "Sync Users" action button in the Web Panel interface.
+- ✓ **LDAP-03**: Implement automated background LDAP user sync scheduler (cron/interval task).
+- ✓ **LDAP-04**: Implement fallback local administrator credentials validation pathway to prevent lockout.
+- ✓ **AUTO-01**: Implement Windows forced/silent update on client startup (bypass options checks and automatically run update installation).
+- ✓ **AUTO-02**: Implement Android forced/silent update on client startup (automatically query version and run APK installer without manual prompts).
 
-- [ ] **LDAP-01**: Implement configurable group-to-role mappings in Settings (e.g. AD group `Domain Admins` maps to Admin role, others map to User role).
-- [ ] **LDAP-02**: Implement manual "Sync Users" action button in the Web Panel interface.
-- [ ] **LDAP-03**: Implement automated background LDAP user sync scheduler (cron/interval task).
-- [ ] **LDAP-04**: Implement fallback local administrator credentials validation pathway to prevent lockout.
+### Global Client Configuration - v4.0
+- ✓ **CONF-01**: Centralized UI panel for Global Client Settings (General & Security) in Settings view.
+- ✓ **CONF-02**: Enforceable configuration propagation REST API `/api/global-settings`.
+- ✓ **CONF-03**: Client-side settings fetch and local enforcement.
+
+## Active Requirements (v4.0 - Active Directory Kerberos SSO Authentication)
+
+- [ ] **SSO-01**: Implement client-side Kerberos (SPNEGO) token acquisition on Windows using Windows SSPI.
+- [ ] **SSO-02**: Implement server-side Negotiate validation and Active Directory login mapping.
 
 ## Deferred/Out of Scope Requirements
 
@@ -49,10 +60,17 @@
 | MGMT-01 to 03 | Phase 2 | Validated |
 | CONN-01 to 02 | Phase 3 | Validated |
 | ACCT-01 to 02 | Phase 4 | Validated |
-| LDAP-01 | Phase 5 | Pending |
-| LDAP-02 | Phase 5 | Pending |
-| LDAP-03 | Phase 5 | Pending |
-| LDAP-04 | Phase 5 | Pending |
+| LDAP-01 | Phase 5 | Validated |
+| LDAP-02 | Phase 5 | Validated |
+| LDAP-03 | Phase 5 | Validated |
+| LDAP-04 | Phase 5 | Validated |
+| AUTO-01 | Phase 5 | Validated |
+| AUTO-02 | Phase 5 | Validated |
+| CONF-01 | Phase 6 | Validated |
+| CONF-02 | Phase 6 | Validated |
+| CONF-03 | Phase 6 | Validated |
+| SSO-01 | Phase 6 | Active |
+| SSO-02 | Phase 6 | Active |
 
 ---
-*Requirements updated: 2026-06-16 for Milestone v3.0*
+*Requirements updated: 2026-06-16 for Milestone v4.0*

@@ -50,13 +50,22 @@ class UserModel {
   void refreshCurrentUser() async {
     if (bind.isDisableAccount()) return;
     networkError.value = '';
+
+    final url = await bind.mainGetApiServer();
+    if (url.isNotEmpty) {
+      _fetchAndApplyGlobalSettings(url);
+    }
+
     final token = bind.mainGetLocalOption(key: 'access_token');
     if (token == '') {
-      await updateOtherModels();
+      if (isWindows && url.isNotEmpty) {
+        await tryKerberosSso(url);
+      } else {
+        await updateOtherModels();
+      }
       return;
     }
     _updateLocalUserInfo();
-    final url = await bind.mainGetApiServer();
     final body = {
       'id': await bind.mainGetMyId(),
       'uuid': await bind.mainGetUuid()
@@ -94,6 +103,83 @@ class UserModel {
       debugPrint('Failed to refreshCurrentUser: $e');
     } finally {
       refreshingUser = false;
+      await updateOtherModels();
+    }
+  }
+
+  void _fetchAndApplyGlobalSettings(String url) async {
+    try {
+      final response = await http.get(Uri.parse('$url/api/global-settings'));
+      if (response.statusCode == 200) {
+        final decodedBody = decode_http_response(response);
+        final data = json.decode(decodedBody);
+        if (data is Map && data.containsKey('options')) {
+          final options = data['options'];
+          if (options is Map && options.isNotEmpty) {
+            final Map<String, String> stringOptions = {};
+            options.forEach((key, value) {
+              stringOptions[key.toString()] = value.toString();
+            });
+            await bind.mainSetOptions(json: json.encode(stringOptions));
+            debugPrint('Successfully applied global settings from server');
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to fetch/apply global settings: $e');
+    }
+  }
+
+  Future<void> tryKerberosSso(String url) async {
+    try {
+      final uri = Uri.parse(url);
+      final host = uri.host;
+      if (host.isEmpty) return;
+      
+      final spn = "HTTP/$host";
+      final token = await bind.mainGetSsoToken(spn: spn);
+      if (token.isEmpty) {
+        debugPrint("Kerberos token is empty (SSO not available or failed)");
+        return;
+      }
+      
+      final ssoUrl = "$url/api/login-sso";
+      final response = await http.post(
+        Uri.parse(ssoUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Negotiate $token'
+        }
+      );
+      
+      if (response.statusCode == 200) {
+        final decodedBody = decode_http_response(response);
+        final data = json.decode(decodedBody);
+        
+        final error = data['error'];
+        if (error != null) {
+          debugPrint("SSO authentication returned error: $error");
+          return;
+        }
+        
+        final accessToken = data['access_token'];
+        if (accessToken != null) {
+          await bind.mainSetLocalOption(key: 'access_token', value: accessToken);
+          final user = UserPayload.fromJson(data);
+          _parseAndUpdateUser(user);
+          debugPrint("Successfully authenticated via Kerberos SSO as ${user.user.name}");
+          
+          BotToast.showText(
+            text: "Вход выполнен автоматически через Active Directory",
+            duration: Duration(seconds: 4),
+          );
+        }
+      } else {
+        debugPrint("SSO authentication failed with status ${response.statusCode}");
+      }
+    } catch (e) {
+      debugPrint("Error executing Kerberos SSO flow: $e");
+    } finally {
       await updateOtherModels();
     }
   }

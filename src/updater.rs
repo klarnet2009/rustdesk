@@ -82,8 +82,8 @@ fn start_auto_update_check() -> Sender<UpdateMsg> {
 }
 
 fn start_auto_update_check_(rx_msg: Receiver<UpdateMsg>) {
-    std::thread::sleep(Duration::from_secs(30));
-    if let Err(e) = check_update(false) {
+    std::thread::sleep(Duration::from_secs(2));
+    if let Err(e) = check_update(true) {
         log::error!("Error checking for updates: {}", e);
     }
 

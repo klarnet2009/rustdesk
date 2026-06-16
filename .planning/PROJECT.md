@@ -19,12 +19,19 @@ Provide a central, reliable management portal where administrators can view all 
 - ✓ **MGMT-01** — Implement robust device tracking and heartbeat audit (v1.0).
 - ✓ **CONN-01** — Click-to-connect URI flow integration (v1.0).
 - ✓ **ACCT-01** — Same-account passwordless remote connections & auto-association (v2.0).
+- ✓ **LDAP-01** — Implement configurable multi-group mapping to local user roles in LDAP settings (v3.0).
+- ✓ **LDAP-02** — Add on-demand LDAP user synchronization button and background sync scheduler in the admin panel (v3.0).
+- ✓ **LDAP-03** — Implement a robust fallback local authentication path to prevent lockout if the LDAP server is offline (v3.0).
+- ✓ **AUTO-01** — Force Windows silent/automated update on startup (v3.0).
+- ✓ **AUTO-02** — Force Android silent/automated update on startup (v3.0).
+- ✓ **CONF-01** — Centralized UI panel for Global Client Settings (General & Security) (v4.0).
+- ✓ **CONF-02** — Enforceable configuration propagation REST API `/api/global-settings` (v4.0).
+- ✓ **CONF-03** — Client-side settings fetch and local enforcement (v4.0).
 
 ### Active
 
-- [ ] **LDAP-01** — Implement configurable multi-group mapping to local user roles in LDAP settings.
-- [ ] **LDAP-02** — Add on-demand LDAP user synchronization button and background sync scheduler in the admin panel.
-- [ ] **LDAP-03** — Implement a robust fallback local authentication path to prevent lockout if the LDAP server is offline.
+- [ ] **SSO-01** — Implement client-side Kerberos (SPNEGO) token acquisition on Windows.
+- [ ] **SSO-02** — Implement server-side Negotiate validation and Active Directory login mapping.
 
 ### Out of Scope
 
@@ -49,6 +56,7 @@ Provide a central, reliable management portal where administrators can view all 
 | SQLite Storage | Lightweight, file-based database requiring zero installation/maintenance for private self-hosted setups. | ✓ Good |
 | Same-Account Passwordless Auth | Automates remote session authorization using client access token verification and client-side passwordless tag check. | ✓ Implemented |
 | Unified LDAP Authentication | Intercepts client logins via `/api/login` and `/api/currentUser` to authenticate Active Directory domain users on the client. | ✓ Implemented |
+| Forced Auto-Update on Startup | Automatically checks, downloads, and silently installs updates on startup for Windows and Android clients without user intervention. | ✓ Implemented |
 
 ## Evolution
 

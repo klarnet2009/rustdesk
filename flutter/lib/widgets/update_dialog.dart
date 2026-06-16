@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import '../services/update_manager.dart';
+import '../common.dart';
 
 class UpdateDialogController extends GetxController {
   final updateManager = UpdateManager();
@@ -19,6 +20,9 @@ class UpdateDialogController extends GetxController {
     updateManager.onUpdateAvailable = (info) {
       updateInfo.value = info;
       showUpdateDialog(info);
+      if (stateGlobal.isForcedUpdating.value) {
+        downloadAndInstall(info);
+      }
     };
 
     updateManager.onDownloadProgress = (progress) {
@@ -75,7 +79,7 @@ class UpdateDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
+    final dialog = AlertDialog(
       title: const Text('Доступно обновление'),
       content: SingleChildScrollView(
         child: Column(
@@ -137,6 +141,9 @@ class UpdateDialog extends StatelessWidget {
       actions: [
         Obx(() {
           if (controller.isDownloading.value) {
+            if (stateGlobal.isForcedUpdating.value) {
+              return const SizedBox.shrink();
+            }
             return TextButton(
               onPressed: () {
                 controller.cancelDownload();
@@ -144,6 +151,9 @@ class UpdateDialog extends StatelessWidget {
               },
               child: const Text('Отмена'),
             );
+          }
+          if (stateGlobal.isForcedUpdating.value) {
+            return const SizedBox.shrink();
           }
           return Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -162,6 +172,11 @@ class UpdateDialog extends StatelessWidget {
           );
         }),
       ],
+    );
+
+    return WillPopScope(
+      onWillPop: () async => !stateGlobal.isForcedUpdating.value,
+      child: dialog,
     );
   }
 }
