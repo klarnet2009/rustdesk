@@ -6,7 +6,7 @@ This roadmap defines the path to overhaul the RustDesk Web Management Panel UI u
 
 ## Phases
 
-- [ ] **Phase 1: Tailwind & DaisyUI UI Migration** - Redesign dashboard and all administration views using DaisyUI.
+- [x] **Phase 1: Tailwind & DaisyUI UI Migration** - Redesign dashboard and all administration views using DaisyUI.
 - [ ] **Phase 2: Device Discovery & Heartbeat Audit** - Audit and fix device list/heartbeat APIs to ensure all online client devices are reliably registered.
 - [ ] **Phase 3: Connection flow & Integration check** - Integrate client-side launcher scheme and document configuration.
 
@@ -23,9 +23,9 @@ This roadmap defines the path to overhaul the RustDesk Web Management Panel UI u
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: Setup Tailwind compile scripts and integrate DaisyUI with `BASE_HTML`.
-- [ ] 01-02: Migrate Dashboard and Devices pages to DaisyUI.
-- [ ] 01-03: Migrate Users, Logs, and Settings pages to DaisyUI.
+- [x] 01-01: Setup Tailwind compile scripts and integrate DaisyUI with `BASE_HTML`.
+- [x] 01-02: Migrate Dashboard and Devices pages to DaisyUI.
+- [x] 01-03: Migrate Users, Logs, and Settings pages to DaisyUI.
 
 ### Phase 2: Device Discovery & Heartbeat Audit
 **Goal**: Ensure all remote client devices reliably report their heartbeat and appear in the admin panel listing.
@@ -57,7 +57,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Tailwind & DaisyUI UI Migration | 0/3 | Not started | - |
+| 1. Tailwind & DaisyUI UI Migration | 3/3 | Completed | 2026-06-16 |
 | 2. Device Discovery & Heartbeat Audit | 0/2 | Not started | - |
 | 3. Connection flow & Integration check | 0/1 | Not started | - |
 
