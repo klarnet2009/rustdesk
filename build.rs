@@ -6,7 +6,6 @@ fn build_windows() {
     println!("cargo:rustc-link-lib=WtsApi32");
     println!("cargo:rustc-link-lib=static=swresample");
     println!("cargo:rustc-link-lib=Mfuuid");
-    println!("cargo:rustc-link-lib=codecapi");
     println!("cargo:rustc-link-lib=strmiids");
     println!("cargo:rerun-if-changed={}", file);
     println!("cargo:rerun-if-changed={}", file2);
