@@ -12,11 +12,10 @@
 
 ## 2. Admin Request Pipeline
 1. **Trigger:** Administrator visits the dashboard `/dashboard` or `/devices`.
-2. **Database Read:**
-   - Execute the offline devices check.
-   - Retrieve all devices sorted by last seen timestamp.
+2. **Database Read & Dynamic Calculations:**
+   - Retrieve all devices sorted by last seen timestamp. Dynamic status calculations are executed in memory (GET `/devices`, GET `/api/peers`, GET `/api/admin/devices`) or via SQLite timestamp functions (GET `/dashboard`) to prevent concurrent write locks.
    - Fetch total device counters and active user lists.
-3. **Jinja2 Rendering:** Inject rows into HTML layouts and serve compile page to the browser.
+3. **Jinja2 Rendering:** Inject rows into HTML layouts (using secure JSON escaping) and serve the compiled page to the browser.
 4. **DataTables Filtering:** Client-side DataTable parses the DOM table and filters records by search inputs.
 
 ## 3. Session Authentication
