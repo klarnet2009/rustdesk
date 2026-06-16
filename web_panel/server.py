@@ -399,51 +399,62 @@ LOGIN_HTML = '''
 DASHBOARD_HTML = '''
 {% extends "base" %}
 {% block content %}
-<h4 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Dashboard</h4>
+<h4 class="text-xl font-semibold text-base-content mb-6">Dashboard</h4>
 
 <!-- Stats -->
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-    <div class="stat-card">
-        <div class="flex items-center">
-            <div class="stat-icon bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 mr-4">
-                <i class="bi bi-pc-display"></i>
+    <div class="stats shadow bg-base-100 border border-base-300 p-2">
+        <div class="stat flex items-center gap-4">
+            <div class="stat-figure text-primary">
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg flex items-center justify-center text-2xl">
+                    <i class="bi bi-pc-display"></i>
+                </div>
             </div>
             <div>
-                <div class="stat-value">{{ stats.total }}</div>
-                <div class="text-gray-500 dark:text-gray-400">Total Devices</div>
+                <div class="stat-value text-3xl font-bold text-base-content mb-1">{{ stats.total }}</div>
+                <div class="stat-title text-sm opacity-60">Total Devices</div>
             </div>
         </div>
     </div>
-    <div class="stat-card">
-        <div class="flex items-center">
-            <div class="stat-icon bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 mr-4">
-                <i class="bi bi-wifi"></i>
+    
+    <div class="stats shadow bg-base-100 border border-base-300 p-2">
+        <div class="stat flex items-center gap-4">
+            <div class="stat-figure text-success">
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg flex items-center justify-center text-2xl">
+                    <i class="bi bi-wifi"></i>
+                </div>
             </div>
             <div>
-                <div class="stat-value">{{ stats.online }}</div>
-                <div class="text-gray-500 dark:text-gray-400">Online Now</div>
+                <div class="stat-value text-3xl font-bold text-base-content mb-1">{{ stats.online }}</div>
+                <div class="stat-title text-sm opacity-60">Online Now</div>
             </div>
         </div>
     </div>
-    <div class="stat-card">
-        <div class="flex items-center">
-            <div class="stat-icon bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 mr-4">
-                <i class="bi bi-arrow-left-right"></i>
+    
+    <div class="stats shadow bg-base-100 border border-base-300 p-2">
+        <div class="stat flex items-center gap-4">
+            <div class="stat-figure text-secondary">
+                <div class="w-12 h-12 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 rounded-lg flex items-center justify-center text-2xl">
+                    <i class="bi bi-arrow-left-right"></i>
+                </div>
             </div>
             <div>
-                <div class="stat-value">{{ stats.connections_today }}</div>
-                <div class="text-gray-500 dark:text-gray-400">Connections Today</div>
+                <div class="stat-value text-3xl font-bold text-base-content mb-1">{{ stats.connections_today }}</div>
+                <div class="stat-title text-sm opacity-60">Connections Today</div>
             </div>
         </div>
     </div>
-    <div class="stat-card">
-        <div class="flex items-center">
-            <div class="stat-icon bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 mr-4">
-                <i class="bi bi-people"></i>
+    
+    <div class="stats shadow bg-base-100 border border-base-300 p-2">
+        <div class="stat flex items-center gap-4">
+            <div class="stat-figure text-warning">
+                <div class="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg flex items-center justify-center text-2xl">
+                    <i class="bi bi-people"></i>
+                </div>
             </div>
             <div>
-                <div class="stat-value">{{ stats.users }}</div>
-                <div class="text-gray-500 dark:text-gray-400">Users</div>
+                <div class="stat-value text-3xl font-bold text-base-content mb-1">{{ stats.users }}</div>
+                <div class="stat-title text-sm opacity-60">Users</div>
             </div>
         </div>
     </div>
@@ -451,22 +462,18 @@ DASHBOARD_HTML = '''
 
 <!-- Charts -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-    <div class="lg:col-span-2 card-custom">
-        <div class="card-header flex justify-between items-center">
-            <h6 class="font-semibold text-gray-900 dark:text-white">Connections (Last 7 Days)</h6>
-        </div>
-        <div class="card-body">
-            <div class="chart-container">
+    <div class="lg:col-span-2 card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body p-5">
+            <h2 class="card-title text-base font-semibold">Connections (Last 7 Days)</h2>
+            <div class="relative h-72">
                 <canvas id="connectionsChart"></canvas>
             </div>
         </div>
     </div>
-    <div class="card-custom">
-        <div class="card-header">
-            <h6 class="font-semibold text-gray-900 dark:text-white">OS Distribution</h6>
-        </div>
-        <div class="card-body">
-            <div class="chart-container">
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body p-5">
+            <h2 class="card-title text-base font-semibold">OS Distribution</h2>
+            <div class="relative h-72">
                 <canvas id="osChart"></canvas>
             </div>
         </div>
@@ -474,48 +481,55 @@ DASHBOARD_HTML = '''
 </div>
 
 <!-- Recent Devices -->
-<div class="card-custom">
-    <div class="card-header flex justify-between items-center">
-        <h6 class="font-semibold text-gray-900 dark:text-white">Recent Devices</h6>
-        <a href="{{ url_for('web_devices') }}" class="btn btn-outline btn-sm">View All</a>
-    </div>
-    <div class="overflow-x-auto">
-        <table class="w-full">
-            <thead>
-                <tr class="bg-gray-50 dark:bg-gray-800/50">
-                    <th class="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">ID</th>
-                    <th class="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">Hostname</th>
-                    <th class="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">User</th>
-                    <th class="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">OS</th>
-                    <th class="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">IP</th>
-                    <th class="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">Status</th>
-                    <th class="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">Last Seen</th>
-                    <th class="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for d in devices[:10] %}
-                <tr class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                    <td class="px-4 py-3"><span class="device-id">{{ d.id }}</span></td>
-                    <td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ d.hostname or '-' }}</td>
-                    <td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ d.username or '-' }}</td>
-                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ d.os_short }}</td>
-                    <td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ d.ip or '-' }}</td>
-                    <td class="px-4 py-3">
-                        <span class="{{ 'badge-online' if d.online else 'badge-offline' }}">
-                            {{ 'Online' if d.online else 'Offline' }}
-                        </span>
-                    </td>
-                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ d.last_seen_str }}</td>
-                    <td class="px-4 py-3">
-                        <button class="btn btn-primary btn-connect" onclick="connectTo('{{ d.id }}')">
-                            <i class="bi bi-link-45deg"></i> Connect
-                        </button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-0">
+        <div class="p-5 flex justify-between items-center border-b border-base-300">
+            <h2 class="card-title text-base font-semibold">Recent Devices</h2>
+            <a href="{{ url_for('web_devices') }}" class="btn btn-outline btn-sm">View All</a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Hostname</th>
+                        <th>User</th>
+                        <th>OS</th>
+                        <th>IP</th>
+                        <th>Status</th>
+                        <th>Last Seen</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in devices[:10] %}
+                    <tr class="hover">
+                        <td><span class="font-mono font-semibold text-primary">{{ d.id }}</span></td>
+                        <td>{{ d.hostname or '-' }}</td>
+                        <td>{{ d.username or '-' }}</td>
+                        <td>{{ d.os_short }}</td>
+                        <td>{{ d.ip or '-' }}</td>
+                        <td>
+                            {% if d.online %}
+                            <span class="badge badge-success gap-1 text-white text-xs font-semibold">
+                                <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                                Online
+                            </span>
+                            {% else %}
+                            <span class="badge badge-ghost text-xs font-semibold">Offline</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ d.last_seen_str }}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm btn-connect" onclick="connectTo('{{ d.id }}')">
+                                <i class="bi bi-link-45deg"></i> Connect
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -527,9 +541,11 @@ function connectTo(id) {
 }
 
 // Get theme colors
-const isDark = document.documentElement.classList.contains('dark');
+const htmlAttr = document.documentElement.getAttribute('data-theme');
+const isDark = htmlAttr === 'business';
 const gridColor = isDark ? '#374151' : '#e5e7eb';
 const textColor = isDark ? '#9ca3af' : '#6b7280';
+const primaryColor = '#fd6a02';
 
 // Connections Chart
 const connCtx = document.getElementById('connectionsChart').getContext('2d');
@@ -540,8 +556,8 @@ new Chart(connCtx, {
         datasets: [{
             label: 'Connections',
             data: {{ chart_data | safe }},
-            borderColor: '#0d6efd',
-            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+            borderColor: primaryColor,
+            backgroundColor: 'rgba(253, 106, 2, 0.1)',
             fill: true,
             tension: 0.4
         }]
@@ -565,7 +581,7 @@ new Chart(osCtx, {
         labels: {{ os_labels | safe }},
         datasets: [{
             data: {{ os_data | safe }},
-            backgroundColor: ['#0d6efd', '#10b981', '#f59e0b', '#ef4444', '#6b7280']
+            backgroundColor: ['#fd6a02', '#0d6efd', '#10b981', '#f59e0b', '#ef4444']
         }]
     },
     options: {
@@ -582,71 +598,79 @@ DEVICES_HTML = '''
 {% extends "base" %}
 {% block content %}
 <div class="flex justify-between items-center mb-6">
-    <h4 class="text-xl font-semibold text-gray-900 dark:text-white">Devices</h4>
+    <h4 class="text-xl font-semibold text-base-content">Devices</h4>
     <button class="btn btn-primary" onclick="location.reload()">
         <i class="bi bi-arrow-clockwise mr-2"></i>Refresh
     </button>
 </div>
 
-<div class="card-custom">
-    <div class="card-body">
-        <table id="devicesTable" class="dataTable w-full">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Hostname</th>
-                    <th>Username</th>
-                    <th>OS</th>
-                    <th>IP Address</th>
-                    <th>Version</th>
-                    <th>Status</th>
-                    <th>Last Seen</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for d in devices %}
-                <tr>
-                    <td><span class="device-id">{{ d.id }}</span></td>
-                    <td>{{ d.hostname or '-' }}</td>
-                    <td>{{ d.username or '-' }}</td>
-                    <td class="text-sm">{{ d.os_short }}</td>
-                    <td>{{ d.ip or '-' }}</td>
-                    <td>{{ d.version or '-' }}</td>
-                    <td>
-                        <span class="{{ 'badge-online' if d.online else 'badge-offline' }}">
-                            {{ 'Online' if d.online else 'Offline' }}
-                        </span>
-                    </td>
-                    <td class="text-sm">{{ d.last_seen_str }}</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm" onclick="connectTo('{{ d.id }}')" title="Connect">
-                            <i class="bi bi-link-45deg"></i>
-                        </button>
-                        <button class="btn btn-outline btn-sm" onclick="showDetails('{{ d.id }}')" title="Details">
-                            <i class="bi bi-info-circle"></i>
-                        </button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-6">
+        <div class="overflow-x-auto">
+            <table id="devicesTable" class="table table-zebra w-full">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Hostname</th>
+                        <th>Username</th>
+                        <th>OS</th>
+                        <th>IP Address</th>
+                        <th>Version</th>
+                        <th>Status</th>
+                        <th>Last Seen</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in devices %}
+                    <tr class="hover">
+                        <td><span class="font-mono font-semibold text-primary">{{ d.id }}</span></td>
+                        <td>{{ d.hostname or '-' }}</td>
+                        <td>{{ d.username or '-' }}</td>
+                        <td>{{ d.os_short }}</td>
+                        <td>{{ d.ip or '-' }}</td>
+                        <td>{{ d.version or '-' }}</td>
+                        <td>
+                            {% if d.online %}
+                            <span class="badge badge-success gap-1 text-white text-xs font-semibold">
+                                <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                                Online
+                            </span>
+                            {% else %}
+                            <span class="badge badge-ghost text-xs font-semibold">Offline</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ d.last_seen_str }}</td>
+                        <td class="flex gap-1">
+                            <button class="btn btn-primary btn-sm btn-square" onclick="connectTo('{{ d.id }}')" title="Connect">
+                                <i class="bi bi-link-45deg text-lg"></i>
+                            </button>
+                            <button class="btn btn-outline btn-sm btn-square" onclick="showDetails('{{ d.id }}')" title="Details">
+                                <i class="bi bi-info-circle text-base"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <!-- Device Details Modal -->
-<div class="modal-backdrop" id="detailsModal">
-    <div class="modal">
-        <div class="modal-header">
-            <h5 class="modal-title">Device Details</h5>
-            <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" onclick="closeModal('detailsModal')">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-        <div class="modal-body" id="detailsBody">
+<dialog id="detailsModal" class="modal">
+    <div class="modal-box">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="font-bold text-lg mb-4">Device Details</h3>
+        <div id="detailsBody">
         </div>
     </div>
-</div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
 {% endblock %}
 
 {% block scripts %}
@@ -672,22 +696,26 @@ function showDetails(id) {
     const d = devices.find(x => x.id === id);
     if (!d) return;
     document.getElementById('detailsBody').innerHTML = `
-        <table class="w-full text-sm">
-            <tr class="border-b border-gray-200 dark:border-gray-700"><th class="py-2 text-left text-gray-600 dark:text-gray-400 w-24">ID</th><td class="py-2"><code class="device-id">${d.id}</code></td></tr>
-            <tr class="border-b border-gray-200 dark:border-gray-700"><th class="py-2 text-left text-gray-600 dark:text-gray-400">Hostname</th><td class="py-2">${d.hostname || '-'}</td></tr>
-            <tr class="border-b border-gray-200 dark:border-gray-700"><th class="py-2 text-left text-gray-600 dark:text-gray-400">Username</th><td class="py-2">${d.username || '-'}</td></tr>
-            <tr class="border-b border-gray-200 dark:border-gray-700"><th class="py-2 text-left text-gray-600 dark:text-gray-400">OS</th><td class="py-2">${d.os || '-'}</td></tr>
-            <tr class="border-b border-gray-200 dark:border-gray-700"><th class="py-2 text-left text-gray-600 dark:text-gray-400">IP</th><td class="py-2">${d.ip || '-'}</td></tr>
-            <tr class="border-b border-gray-200 dark:border-gray-700"><th class="py-2 text-left text-gray-600 dark:text-gray-400">CPU</th><td class="py-2">${d.cpu || '-'}</td></tr>
-            <tr class="border-b border-gray-200 dark:border-gray-700"><th class="py-2 text-left text-gray-600 dark:text-gray-400">Memory</th><td class="py-2">${d.memory || '-'}</td></tr>
-            <tr class="border-b border-gray-200 dark:border-gray-700"><th class="py-2 text-left text-gray-600 dark:text-gray-400">Version</th><td class="py-2">${d.version || '-'}</td></tr>
-            <tr><th class="py-2 text-left text-gray-600 dark:text-gray-400">Last Seen</th><td class="py-2">${d.last_seen_str}</td></tr>
-        </table>
+        <div class="overflow-x-auto">
+            <table class="table table-compact w-full text-sm">
+                <tbody>
+                    <tr class="border-b border-base-200"><th class="w-24 opacity-60">ID</th><td><code class="font-mono font-semibold text-primary">${d.id}</code></td></tr>
+                    <tr class="border-b border-base-200"><th class="opacity-60">Hostname</th><td>${d.hostname || '-'}</td></tr>
+                    <tr class="border-b border-base-200"><th class="opacity-60">Username</th><td>${d.username || '-'}</td></tr>
+                    <tr class="border-b border-base-200"><th class="opacity-60">OS</th><td>${d.os || '-'}</td></tr>
+                    <tr class="border-b border-base-200"><th class="opacity-60">IP</th><td>${d.ip || '-'}</td></tr>
+                    <tr class="border-b border-base-200"><th class="opacity-60">CPU</th><td>${d.cpu || '-'}</td></tr>
+                    <tr class="border-b border-base-200"><th class="opacity-60">Memory</th><td>${d.memory || '-'}</td></tr>
+                    <tr class="border-b border-base-200"><th class="opacity-60">Version</th><td>${d.version || '-'}</td></tr>
+                    <tr><th class="opacity-60">Last Seen</th><td>${d.last_seen_str}</td></tr>
+                </tbody>
+            </table>
+        </div>
         <button class="btn btn-primary w-full mt-4" onclick="connectTo('${d.id}')">
             <i class="bi bi-link-45deg mr-2"></i>Connect
         </button>
     `;
-    openModal('detailsModal');
+    document.getElementById('detailsModal').showModal();
 }
 </script>
 {% endblock %}
