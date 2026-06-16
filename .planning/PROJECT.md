@@ -15,12 +15,16 @@ Provide a central, reliable management portal where administrators can view all 
 - ✓ **INIT-01** — Basic Flask backend with SQLite storage initialized (`web_panel/server.py`).
 - ✓ **INIT-02** — Base HTTP endpoints for heartbeat reception, device registration, and audit logs.
 - ✓ **INIT-03** — JWT authentication helper and base HTML template routing.
+- ✓ **UI-01** — Redesign and migrate the entire Web UI to Tailwind CSS and DaisyUI (v1.0).
+- ✓ **MGMT-01** — Implement robust device tracking and heartbeat audit (v1.0).
+- ✓ **CONN-01** — Click-to-connect URI flow integration (v1.0).
+- ✓ **ACCT-01** — Same-account passwordless remote connections & auto-association (v2.0).
 
 ### Active
 
-- [ ] **UI-01** — Redesign and migrate the entire Web UI to Tailwind CSS and DaisyUI, replacing custom CSS selectors with modern styling tokens.
-- [ ] **MGMT-01** — Implement robust device tracking to ensure all online client devices are reliably registered, active, and listed.
-- [ ] **CONN-01** — Verify click-to-connect URI flow (`rustdesk://connection/new/<id>`) works smoothly to launch the client application from the web interface.
+- [ ] **LDAP-01** — Implement configurable multi-group mapping to local user roles in LDAP settings.
+- [ ] **LDAP-02** — Add on-demand LDAP user synchronization button and background sync scheduler in the admin panel.
+- [ ] **LDAP-03** — Implement a robust fallback local authentication path to prevent lockout if the LDAP server is offline.
 
 ### Out of Scope
 
@@ -41,8 +45,10 @@ Provide a central, reliable management portal where administrators can view all 
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Migrate to DaisyUI | Provides premium, pre-built web dashboard widgets (tables, status indicators, statistics cards) using Tailwind. | — Pending |
+| Migrate to DaisyUI | Provides premium, pre-built web dashboard widgets (tables, status indicators, statistics cards) using Tailwind. | ✓ Completed |
 | SQLite Storage | Lightweight, file-based database requiring zero installation/maintenance for private self-hosted setups. | ✓ Good |
+| Same-Account Passwordless Auth | Automates remote session authorization using client access token verification and client-side passwordless tag check. | ✓ Implemented |
+| Unified LDAP Authentication | Intercepts client logins via `/api/login` and `/api/currentUser` to authenticate Active Directory domain users on the client. | ✓ Implemented |
 
 ## Evolution
 

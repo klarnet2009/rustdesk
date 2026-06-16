@@ -2,7 +2,7 @@
 
 ## Overview
 
-This roadmap defines the path to overhaul the RustDesk Web Management Panel UI using Tailwind CSS and DaisyUI, resolve device discovery/heartbeat issues, and verify remote connection launcher flows.
+This roadmap defines the path to overhaul the RustDesk Web Management Panel UI, resolve device discovery/heartbeat issues, verify remote connection launcher flows, implement passwordless login, and enhance Active Directory/LDAP integration.
 
 ## Phases
 
@@ -10,6 +10,7 @@ This roadmap defines the path to overhaul the RustDesk Web Management Panel UI u
 - [x] **Phase 2: Device Discovery & Heartbeat Audit** - Audit and fix device list/heartbeat APIs to ensure all online client devices are reliably registered.
 - [x] **Phase 3: Connection flow & Integration check** - Integrate client-side launcher scheme and document configuration.
 - [x] **Phase 4: Passwordless Connection & Same-Account Login** - Implement auto-association, address book tagging, same-account host authorization, and client password prompt bypass.
+- [ ] **Phase 5: LDAP & Active Directory Enhancements** - Implement group-to-role mappings, manual/automatic user sync scheduler, and local admin login fallback.
 
 ## Phase Details
 
@@ -68,6 +69,21 @@ Plans:
 Plans:
 - [x] 04-01: Implement auto-association, address book tagging, same-account host authorization, and client password prompt bypass.
 
+### Phase 5: LDAP & Active Directory Enhancements
+**Goal**: Implement group-to-role mappings, manual/automatic user sync scheduler, and local admin login fallback.
+**Depends on**: Phase 4
+**Requirements**: LDAP-01, LDAP-02, LDAP-03, LDAP-04
+**Success Criteria**:
+  1. Administrators can configure group mappings in Settings (AD group name mapped to local role).
+  2. Users from mapped AD groups log in and get local roles mapped dynamically.
+  3. Admin can trigger user sync via UI button, and sync runs automatically in the background.
+  4. Local admin can still log in even when the LDAP server is simulated offline.
+**Plans**: 2 plans
+
+Plans:
+- [ ] 05-01: Implement multi-group mapping configuration and role resolution logic.
+- [ ] 05-02: Implement manual sync button, background scheduler, and local admin fallback login.
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -76,7 +92,8 @@ Plans:
 | 2. Device Discovery & Heartbeat Audit | 2/2 | Completed | 2026-06-16 |
 | 3. Connection flow & Integration check | 1/1 | Completed | 2026-06-16 |
 | 4. Passwordless Connection & Same-Account Login | 1/1 | Completed | 2026-06-16 |
+| 5. LDAP & Active Directory Enhancements | 0/2 | Pending | — |
 
 ---
 *Roadmap defined: 2026-06-16*
-*Last updated: 2026-06-16 after initial definition*
+*Last updated: 2026-06-16 for Milestone v3.0*
