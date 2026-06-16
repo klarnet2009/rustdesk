@@ -167,7 +167,7 @@ class UserModel {
           await bind.mainSetLocalOption(key: 'access_token', value: accessToken);
           final user = UserPayload.fromJson(data);
           _parseAndUpdateUser(user);
-          debugPrint("Successfully authenticated via Kerberos SSO as ${user.user.name}");
+          debugPrint("Successfully authenticated via Kerberos SSO as ${user.name}");
           
           BotToast.showText(
             text: "Вход выполнен автоматически через Active Directory",

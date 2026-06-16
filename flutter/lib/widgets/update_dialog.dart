@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import '../services/update_manager.dart';
 import '../common.dart';
+import '../models/state_model.dart';
 
 class UpdateDialogController extends GetxController {
   final updateManager = UpdateManager();
