@@ -679,6 +679,9 @@ $(document).ready(function() {
     $('#devicesTable').DataTable({
         order: [[7, 'desc']],
         pageLength: 25,
+        search: {
+            search: "{{ search_query }}"
+        },
         language: {
             search: "Search:",
             lengthMenu: "Show _MENU_ devices"
@@ -1144,10 +1147,14 @@ def update_offline_devices(conn):
     conn.execute("UPDATE devices SET online = 0 WHERE datetime(last_seen) < datetime('now', '-30 seconds') OR last_seen IS NULL")
     conn.commit()
 
-def get_devices_list():
+def get_devices_list(search_query=None):
     conn = get_db()
     update_offline_devices(conn)
-    devices = conn.execute("SELECT * FROM devices ORDER BY last_seen DESC").fetchall()
+    if search_query:
+        q = f"%{search_query}%"
+        devices = conn.execute("SELECT * FROM devices WHERE hostname LIKE ? OR username LIKE ? OR os LIKE ? ORDER BY last_seen DESC", (q, q, q)).fetchall()
+    else:
+        devices = conn.execute("SELECT * FROM devices ORDER BY last_seen DESC").fetchall()
     conn.close()
     
     devices_list = []
@@ -1240,12 +1247,14 @@ def web_dashboard():
 @app.route('/devices')
 @web_login_required
 def web_devices():
-    devices_list = get_devices_list()
+    search_query = request.args.get('search', '')
+    devices_list = get_devices_list(search_query)
     return render_page(DEVICES_HTML,
         title='Devices',
         active_page='devices',
         devices=devices_list,
-        devices_json=json.dumps(devices_list)
+        devices_json=json.dumps(devices_list),
+        search_query=search_query
     )
 
 @app.route('/users')
@@ -1548,9 +1557,14 @@ def api_admin_devices():
     if not request.current_user.get('is_admin'):
         return jsonify({"error": "Access denied"}), 403
     
+    search_query = request.args.get('search', '')
     conn = get_db()
     update_offline_devices(conn)
-    devices = conn.execute("SELECT * FROM devices ORDER BY last_seen DESC").fetchall()
+    if search_query:
+        q = f"%{search_query}%"
+        devices = conn.execute("SELECT * FROM devices WHERE hostname LIKE ? OR username LIKE ? OR os LIKE ? ORDER BY last_seen DESC", (q, q, q)).fetchall()
+    else:
+        devices = conn.execute("SELECT * FROM devices ORDER BY last_seen DESC").fetchall()
     conn.close()
     
     return jsonify({"devices": [dict(d) for d in devices]})
