@@ -38,7 +38,7 @@ CORS(app, resources={r"/api/*": {"origins": "*", "methods": ["GET", "POST", "OPT
 HOST = os.environ.get('API_HOST', '0.0.0.0')  # Listen on all interfaces
 PORT = int(os.environ.get('API_PORT', 21114))
 JWT_SECRET = 'rustdesk-api-jwt-secret'
-DB_PATH = 'rustdesk.db'
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rustdesk.db')
 
 # SSL Configuration
 SSL_ENABLED = os.environ.get('SSL_ENABLED', 'false').lower() == 'true'
@@ -680,7 +680,7 @@ $(document).ready(function() {
         order: [[7, 'desc']],
         pageLength: 25,
         search: {
-            search: "{{ search_query }}"
+            search: {{ search_query | tojson }}
         },
         language: {
             search: "Search:",
@@ -693,7 +693,7 @@ function connectTo(id) {
     window.location.href = 'rustdesk://connection/new/' + id;
 }
 
-const devices = {{ devices_json | safe }};
+const devices = {{ devices | tojson }};
 
 function showDetails(id) {
     const d = devices.find(x => x.id === id);
@@ -1144,12 +1144,13 @@ def web_logout():
     return redirect(url_for('web_login'))
 
 def update_offline_devices(conn):
+    # This function is kept for compatibility on writes (e.g. heartbeat updates)
+    # but no longer called on read paths (GET requests) to prevent DB locks.
     conn.execute("UPDATE devices SET online = 0 WHERE datetime(last_seen) < datetime('now', '-30 seconds') OR last_seen IS NULL")
-    conn.commit()
 
 def get_devices_list(search_query=None):
     conn = get_db()
-    update_offline_devices(conn)
+    # Offline status is now dynamically calculated below to prevent DB locking
     if search_query:
         q = f"%{search_query}%"
         devices = conn.execute("SELECT * FROM devices WHERE hostname LIKE ? OR username LIKE ? OR os LIKE ? ORDER BY last_seen DESC", (q, q, q)).fetchall()
@@ -1160,6 +1161,19 @@ def get_devices_list(search_query=None):
     devices_list = []
     for d in devices:
         device = dict(d)
+        
+        # Calculate online status dynamically based on UTC timestamps
+        is_online = 0
+        last_seen = device.get('last_seen')
+        if last_seen:
+            try:
+                dt = datetime.fromisoformat(last_seen)
+                if datetime.utcnow() - dt < timedelta(seconds=30):
+                    is_online = 1
+            except Exception:
+                pass
+        device['online'] = is_online
+        
         # Short OS name
         os_full = device.get('os', '') or ''
         if 'Windows 11' in os_full:
@@ -1189,11 +1203,13 @@ def get_devices_list(search_query=None):
 @web_login_required
 def web_dashboard():
     conn = get_db()
-    update_offline_devices(conn)
     
     # Stats
     total = conn.execute("SELECT COUNT(*) FROM devices").fetchone()[0]
-    online = conn.execute("SELECT COUNT(*) FROM devices WHERE online = 1").fetchone()[0]
+    # Calculate online count dynamically to avoid database writes
+    online = conn.execute(
+        "SELECT COUNT(*) FROM devices WHERE last_seen IS NOT NULL AND datetime(last_seen) >= datetime('now', '-30 seconds')"
+    ).fetchone()[0]
     connections_today = conn.execute("SELECT COUNT(*) FROM connections WHERE date(started_at) = date('now')").fetchone()[0]
     users_count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
     
@@ -1253,7 +1269,6 @@ def web_devices():
         title='Devices',
         active_page='devices',
         devices=devices_list,
-        devices_json=json.dumps(devices_list),
         search_query=search_query
     )
 
@@ -1493,6 +1508,7 @@ def api_heartbeat():
                         ON CONFLICT(id) DO UPDATE SET uuid = excluded.uuid, online = 1, last_seen = datetime('now')''',
                      (device_id, uuid))
         update_offline_devices(conn)
+        conn.commit()
         conn.close()
     
     return jsonify({"modified_at": int(time.time())})
@@ -1559,7 +1575,6 @@ def api_admin_devices():
     
     search_query = request.args.get('search', '')
     conn = get_db()
-    update_offline_devices(conn)
     if search_query:
         q = f"%{search_query}%"
         devices = conn.execute("SELECT * FROM devices WHERE hostname LIKE ? OR username LIKE ? OR os LIKE ? ORDER BY last_seen DESC", (q, q, q)).fetchall()
@@ -1567,7 +1582,22 @@ def api_admin_devices():
         devices = conn.execute("SELECT * FROM devices ORDER BY last_seen DESC").fetchall()
     conn.close()
     
-    return jsonify({"devices": [dict(d) for d in devices]})
+    devices_list = []
+    for d in devices:
+        device = dict(d)
+        is_online = 0
+        last_seen = device.get('last_seen')
+        if last_seen:
+            try:
+                dt = datetime.fromisoformat(last_seen)
+                if datetime.utcnow() - dt < timedelta(seconds=30):
+                    is_online = 1
+            except Exception:
+                pass
+        device['online'] = is_online
+        devices_list.append(device)
+    
+    return jsonify({"devices": devices_list})
 
 @app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
 @token_required
@@ -1600,20 +1630,29 @@ def api_peers():
         return '', 200
         
     conn = get_db()
-    update_offline_devices(conn)
     # Fetch devices belonging to the user
     devices = conn.execute("SELECT * FROM devices WHERE user_id = ?", (request.current_user['user_id'],)).fetchall()
     conn.close()
     
     peers_list = []
     for d in devices:
+        is_online = 0
+        last_seen = d['last_seen']
+        if last_seen:
+            try:
+                dt = datetime.fromisoformat(last_seen)
+                if datetime.utcnow() - dt < timedelta(seconds=30):
+                    is_online = 1
+            except Exception:
+                pass
+        
         peer = {
             "id": d['id'],
             "user": str(d['user_id']),
             "user_name": d['username'] or '',
             "device_group_name": d['group_name'] or 'Default',
             "note": "",
-            "status": 1 if d['online'] else 0,
+            "status": is_online,
             "info": {
                 "os": d['os'] or '',
                 "username": d['username'] or '',
