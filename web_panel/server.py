@@ -725,90 +725,97 @@ USERS_HTML = '''
 {% extends "base" %}
 {% block content %}
 <div class="flex justify-between items-center mb-6">
-    <h4 class="text-xl font-semibold text-gray-900 dark:text-white">Users</h4>
+    <h1 class="text-2xl font-bold text-base-content">Users</h1>
     <button class="btn btn-primary" onclick="openModal('addUserModal')">
         <i class="bi bi-plus-lg mr-2"></i>Add User
     </button>
 </div>
 
-<div class="card-custom">
-    <div class="card-body">
-        <table id="usersTable" class="dataTable w-full">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Status</th>
-                    <th>Created</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in users %}
-                <tr>
-                    <td>{{ u.id }}</td>
-                    <td><i class="bi bi-person-circle mr-2 text-gray-400"></i>{{ u.username }}</td>
-                    <td>{{ u.email or '-' }}</td>
-                    <td>
-                        <span class="text-xs font-medium px-2.5 py-1 rounded {{ 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' if u.is_admin else 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' }}">
-                            {{ 'Admin' if u.is_admin else 'User' }}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="text-xs font-medium px-2.5 py-1 rounded {{ 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' if u.status == 1 else 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' }}">
-                            {{ 'Active' if u.status == 1 else 'Disabled' }}
-                        </span>
-                    </td>
-                    <td class="text-sm">{{ u.created_at }}</td>
-                    <td>
-                        <button class="btn btn-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onclick="deleteUser({{ u.id }})" {{ 'disabled' if u.username == 'admin' else '' }}>
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-6">
+        <div class="overflow-x-auto">
+            <table id="usersTable" class="table table-zebra w-full">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr class="hover">
+                        <td>{{ u.id }}</td>
+                        <td class="font-medium flex items-center gap-2"><i class="bi bi-person-circle text-base-content/40"></i>{{ u.username }}</td>
+                        <td>{{ u.email or '-' }}</td>
+                        <td>
+                            {% if u.is_admin %}
+                            <span class="badge badge-error text-white text-xs font-semibold">Admin</span>
+                            {% else %}
+                            <span class="badge badge-ghost text-xs font-semibold">User</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.status == 1 %}
+                            <span class="badge badge-success text-white text-xs font-semibold">Active</span>
+                            {% else %}
+                            <span class="badge badge-ghost text-xs font-semibold">Disabled</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-sm opacity-70">{{ u.created_at }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-ghost text-red-600 {{ 'btn-disabled opacity-50' if u.username == 'admin' else '' }}" onclick="deleteUser({{ u.id }})" {{ 'disabled' if u.username == 'admin' else '' }}>
+                                <i class="bi bi-trash text-lg"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <!-- Add User Modal -->
-<div class="modal-backdrop" id="addUserModal">
-    <div class="modal">
-        <div class="modal-header">
-            <h5 class="modal-title">Add User</h5>
-            <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" onclick="closeModal('addUserModal')">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
+<dialog id="addUserModal" class="modal">
+    <div class="modal-box">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="font-bold text-lg mb-4">Add User</h3>
         <form action="{{ url_for('web_add_user') }}" method="POST">
-            <div class="modal-body">
-                <div class="mb-4">
-                    <label class="form-label">Username</label>
-                    <input type="text" class="form-control" name="username" required>
-                </div>
-                <div class="mb-4">
-                    <label class="form-label">Email</label>
-                    <input type="email" class="form-control" name="email">
-                </div>
-                <div class="mb-4">
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-control" name="password" required>
-                </div>
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" name="is_admin" id="isAdmin">
-                    <label class="form-check-label" for="isAdmin">Administrator</label>
-                </div>
+            <div class="form-control w-full mb-4">
+                <label class="label"><span class="label-text font-semibold">Username</span></label>
+                <input type="text" class="input input-bordered w-full" name="username" required>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('addUserModal')">Cancel</button>
+            <div class="form-control w-full mb-4">
+                <label class="label"><span class="label-text font-semibold">Email</span></label>
+                <input type="email" class="input input-bordered w-full" name="email">
+            </div>
+            <div class="form-control w-full mb-4">
+                <label class="label"><span class="label-text font-semibold">Password</span></label>
+                <input type="password" class="input input-bordered w-full" name="password" required>
+            </div>
+            <div class="form-control w-full mb-6">
+                <label class="label cursor-pointer justify-start gap-3">
+                    <input type="checkbox" class="checkbox checkbox-primary" name="is_admin" id="isAdmin">
+                    <span class="label-text font-semibold">Administrator</span>
+                </label>
+            </div>
+            <div class="flex justify-end gap-3 mt-4">
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('addUserModal').close()">Cancel</button>
                 <button type="submit" class="btn btn-primary">Add User</button>
             </div>
         </form>
     </div>
-</div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
 {% endblock %}
 
 {% block scripts %}
@@ -823,6 +830,16 @@ function deleteUser(id) {
             .then(() => location.reload());
     }
 }
+
+// Override openModal for addUserModal to use dialog showModal
+window.openModal = function(id) {
+    if (id === 'addUserModal') {
+        document.getElementById('addUserModal').showModal();
+    } else {
+        document.getElementById(id).classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+};
 </script>
 {% endblock %}
 '''
@@ -831,47 +848,51 @@ LOGS_HTML = '''
 {% extends "base" %}
 {% block content %}
 <div class="flex justify-between items-center mb-6">
-    <h4 class="text-xl font-semibold text-gray-900 dark:text-white">Audit Logs</h4>
-    <div class="flex gap-1">
-        <button class="btn {{ 'btn-primary' if log_type == 'all' else 'btn-outline' }} btn-sm" onclick="location.href='?type=all'">All</button>
-        <button class="btn {{ 'btn-primary' if log_type == 'conn' else 'btn-outline' }} btn-sm" onclick="location.href='?type=conn'">Connections</button>
-        <button class="btn {{ 'btn-primary' if log_type == 'file' else 'btn-outline' }} btn-sm" onclick="location.href='?type=file'">Files</button>
-        <button class="btn {{ 'btn-primary' if log_type == 'alarm' else 'btn-outline' }} btn-sm" onclick="location.href='?type=alarm'">Alarms</button>
+    <h1 class="text-2xl font-bold text-base-content">Audit Logs</h1>
+    <div class="join">
+        <button class="btn join-item btn-sm {{ 'btn-primary text-primary-content' if log_type == 'all' else 'btn-outline' }}" onclick="location.href='?type=all'">All</button>
+        <button class="btn join-item btn-sm {{ 'btn-primary text-primary-content' if log_type == 'conn' else 'btn-outline' }}" onclick="location.href='?type=conn'">Connections</button>
+        <button class="btn join-item btn-sm {{ 'btn-primary text-primary-content' if log_type == 'file' else 'btn-outline' }}" onclick="location.href='?type=file'">Files</button>
+        <button class="btn join-item btn-sm {{ 'btn-primary text-primary-content' if log_type == 'alarm' else 'btn-outline' }}" onclick="location.href='?type=alarm'">Alarms</button>
     </div>
 </div>
 
-<div class="card-custom">
-    <div class="card-body">
-        <table id="logsTable" class="dataTable w-full">
-            <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>Type</th>
-                    <th>Device ID</th>
-                    <th>Peer ID</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for log in logs %}
-                <tr>
-                    <td class="text-sm">{{ log.created_at }}</td>
-                    <td>
-                        <span class="text-xs font-medium px-2.5 py-1 rounded 
-                            {{ 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400' if log.type == 'conn' else 
-                               'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' if log.type == 'file' else 
-                               'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' if log.type == 'alarm' else 
-                               'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' }}">
-                            {{ log.type }}
-                        </span>
-                    </td>
-                    <td><code class="text-sm text-gray-600 dark:text-gray-400">{{ log.device_id or '-' }}</code></td>
-                    <td><code class="text-sm text-gray-600 dark:text-gray-400">{{ log.peer_id or '-' }}</code></td>
-                    <td>{{ log.action or '-' }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-6">
+        <div class="overflow-x-auto">
+            <table id="logsTable" class="table table-zebra w-full">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Type</th>
+                        <th>Device ID</th>
+                        <th>Peer ID</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr class="hover">
+                        <td class="text-sm opacity-75">{{ log.created_at }}</td>
+                        <td>
+                            {% if log.type == 'conn' %}
+                            <span class="badge badge-accent text-white text-xs font-semibold">conn</span>
+                            {% elif log.type == 'file' %}
+                            <span class="badge badge-warning text-white text-xs font-semibold">file</span>
+                            {% elif log.type == 'alarm' %}
+                            <span class="badge badge-error text-white text-xs font-semibold">alarm</span>
+                            {% else %}
+                            <span class="badge badge-ghost text-xs font-semibold">{{ log.type }}</span>
+                            {% endif %}
+                        </td>
+                        <td><code class="font-mono text-sm opacity-80">{{ log.device_id or '-' }}</code></td>
+                        <td><code class="font-mono text-sm opacity-80">{{ log.peer_id or '-' }}</code></td>
+                        <td>{{ log.action or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -891,92 +912,99 @@ $(document).ready(function() {
 SETTINGS_HTML = '''
 {% extends "base" %}
 {% block content %}
-<h4 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Settings</h4>
+<h1 class="text-2xl font-bold text-base-content mb-6">Settings</h1>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <div class="space-y-6">
-        <div class="card-custom">
-            <div class="card-header">
-                <h6 class="font-semibold text-gray-900 dark:text-white"><i class="bi bi-server mr-2"></i>Server Configuration</h6>
-            </div>
-            <div class="card-body">
-                <div class="mb-4">
-                    <label class="form-label">ID Server</label>
-                    <input type="text" class="form-control bg-gray-50 dark:bg-gray-700" value="10.21.31.11" disabled>
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body p-6">
+                <h2 class="card-title text-base font-semibold border-b border-base-200 pb-3 mb-4"><i class="bi bi-server text-primary mr-2"></i>Server Configuration</h2>
+                <div class="form-control w-full mb-4">
+                    <label class="label"><span class="label-text opacity-70">ID Server</span></label>
+                    <input type="text" class="input input-bordered w-full bg-base-200" value="10.21.31.11" disabled>
                 </div>
-                <div class="mb-4">
-                    <label class="form-label">Relay Server</label>
-                    <input type="text" class="form-control bg-gray-50 dark:bg-gray-700" value="10.21.31.11" disabled>
+                <div class="form-control w-full mb-4">
+                    <label class="label"><span class="label-text opacity-70">Relay Server</span></label>
+                    <input type="text" class="input input-bordered w-full bg-base-200" value="10.21.31.11" disabled>
                 </div>
-                <div>
-                    <label class="form-label">API Server</label>
-                    <input type="text" class="form-control bg-gray-50 dark:bg-gray-700" value="http://{{ request.host }}" disabled>
+                <div class="form-control w-full">
+                    <label class="label"><span class="label-text opacity-70">API Server</span></label>
+                    <input type="text" class="input input-bordered w-full bg-base-200" value="http://{{ request.host }}" disabled>
                 </div>
             </div>
         </div>
         
-        <div class="card-custom">
-            <div class="card-header">
-                <h6 class="font-semibold text-gray-900 dark:text-white"><i class="bi bi-info-circle mr-2"></i>System Info</h6>
-            </div>
-            <div class="card-body">
-                <table class="w-full text-sm">
-                    <tr class="border-b border-gray-200 dark:border-gray-700">
-                        <td class="py-2 text-gray-600 dark:text-gray-400">LDAP Library</td>
-                        <td class="py-2 text-right">
-                            <span class="text-xs font-medium px-2.5 py-1 rounded {{ 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' if ldap_available else 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' }}">
-                                {{ 'Installed' if ldap_available else 'Not installed' }}
-                            </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="py-2 text-gray-600 dark:text-gray-400">LDAP Status</td>
-                        <td class="py-2 text-right">
-                            <span class="text-xs font-medium px-2.5 py-1 rounded {{ 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' if ldap_config.get('enabled') else 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' }}">
-                                {{ 'Enabled' if ldap_config.get('enabled') else 'Disabled' }}
-                            </span>
-                        </td>
-                    </tr>
-                </table>
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body p-6">
+                <h2 class="card-title text-base font-semibold border-b border-base-200 pb-3 mb-4"><i class="bi bi-info-circle text-primary mr-2"></i>System Info</h2>
+                <div class="overflow-x-auto">
+                    <table class="table table-compact w-full text-sm">
+                        <tbody>
+                            <tr class="border-b border-base-200">
+                                <td class="opacity-70">LDAP Library</td>
+                                <td class="text-right">
+                                    {% if ldap_available %}
+                                    <span class="badge badge-success text-white text-xs font-semibold">Installed</span>
+                                    {% else %}
+                                    <span class="badge badge-ghost text-xs font-semibold">Not installed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="opacity-70">LDAP Status</td>
+                                <td class="text-right">
+                                    {% if ldap_config.get('enabled') %}
+                                    <span class="badge badge-success text-white text-xs font-semibold">Enabled</span>
+                                    {% else %}
+                                    <span class="badge badge-ghost text-xs font-semibold">Disabled</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
     
-    <div class="card-custom">
-        <div class="card-header flex justify-between items-center">
-            <h6 class="font-semibold text-gray-900 dark:text-white"><i class="bi bi-diagram-3 mr-2"></i>LDAP / Active Directory</h6>
-            <button type="button" class="btn btn-outline btn-sm" onclick="testLdap()">
-                <i class="bi bi-plug mr-1"></i>Test Connection
-            </button>
-        </div>
-        <div class="card-body">
-            <div id="ldapTestResult" class="alert hidden mb-4"></div>
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body p-6">
+            <div class="flex justify-between items-center border-b border-base-200 pb-3 mb-4">
+                <h2 class="card-title text-base font-semibold"><i class="bi bi-diagram-3 text-primary mr-2"></i>LDAP / Active Directory</h2>
+                <button type="button" class="btn btn-outline btn-sm" onclick="testLdap()">
+                    <i class="bi bi-plug mr-1"></i>Test Connection
+                </button>
+            </div>
+            
+            <div id="ldapTestResult" class="alert hidden mb-4 shadow-sm"></div>
             
             <form action="{{ url_for('web_save_ldap') }}" method="POST">
-                <div class="mb-4">
-                    <label class="form-label">LDAP Server URL</label>
-                    <input type="text" class="form-control" name="ldap_server" placeholder="ldap://dc.example.com:389" value="{{ ldap_config.get('server', '') }}">
-                    <small class="text-gray-500 dark:text-gray-400 text-xs mt-1 block">Example: ldap://192.168.1.10 or ldaps://dc.company.local</small>
+                <div class="form-control w-full mb-4">
+                    <label class="label"><span class="label-text font-semibold">LDAP Server URL</span></label>
+                    <input type="text" class="input input-bordered w-full" name="ldap_server" placeholder="ldap://dc.example.com:389" value="{{ ldap_config.get('server', '') }}">
+                    <span class="label-text-alt opacity-50 mt-1 block">Example: ldap://192.168.1.10 or ldaps://dc.company.local</span>
                 </div>
-                <div class="mb-4">
-                    <label class="form-label">Base DN</label>
-                    <input type="text" class="form-control" name="ldap_base_dn" placeholder="DC=company,DC=local" value="{{ ldap_config.get('base_dn', '') }}">
-                    <small class="text-gray-500 dark:text-gray-400 text-xs mt-1 block">The base distinguished name for user searches</small>
+                <div class="form-control w-full mb-4">
+                    <label class="label"><span class="label-text font-semibold">Base DN</span></label>
+                    <input type="text" class="input input-bordered w-full" name="ldap_base_dn" placeholder="DC=company,DC=local" value="{{ ldap_config.get('base_dn', '') }}">
+                    <span class="label-text-alt opacity-50 mt-1 block">The base distinguished name for user searches</span>
                 </div>
-                <div class="mb-4">
-                    <label class="form-label">Bind DN (Admin Account)</label>
-                    <input type="text" class="form-control" name="ldap_bind_dn" placeholder="CN=Administrator,CN=Users,DC=company,DC=local" value="{{ ldap_config.get('bind_dn', '') }}">
-                    <small class="text-gray-500 dark:text-gray-400 text-xs mt-1 block">Leave empty for anonymous bind</small>
+                <div class="form-control w-full mb-4">
+                    <label class="label"><span class="label-text font-semibold">Bind DN (Admin Account)</span></label>
+                    <input type="text" class="input input-bordered w-full" name="ldap_bind_dn" placeholder="CN=Administrator,CN=Users,DC=company,DC=local" value="{{ ldap_config.get('bind_dn', '') }}">
+                    <span class="label-text-alt opacity-50 mt-1 block">Leave empty for anonymous bind</span>
                 </div>
-                <div class="mb-4">
-                    <label class="form-label">Bind Password</label>
-                    <input type="password" class="form-control" name="ldap_bind_password" placeholder="••••••••">
+                <div class="form-control w-full mb-4">
+                    <label class="label"><span class="label-text font-semibold">Bind Password</span></label>
+                    <input type="password" class="input input-bordered w-full" name="ldap_bind_password" placeholder="••••••••">
                 </div>
-                <div class="form-check form-switch mb-4">
-                    <input type="checkbox" class="form-check-input" name="ldap_enabled" id="ldapEnabled" {{ 'checked' if ldap_config.get('enabled') else '' }}>
-                    <label class="form-check-label" for="ldapEnabled">Enable LDAP Authentication</label>
+                <div class="form-control w-full mb-6">
+                    <label class="label cursor-pointer justify-start gap-3">
+                        <input type="checkbox" class="checkbox checkbox-primary" name="ldap_enabled" id="ldapEnabled" {{ 'checked' if ldap_config.get('enabled') else '' }}>
+                        <span class="label-text font-semibold">Enable LDAP Authentication</span>
+                    </label>
                 </div>
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary w-full sm:w-auto">
                     <i class="bi bi-save mr-1"></i>Save Settings
                 </button>
             </form>
@@ -989,7 +1017,7 @@ SETTINGS_HTML = '''
 <script>
 function testLdap() {
     const resultDiv = document.getElementById('ldapTestResult');
-    resultDiv.className = 'alert alert-info';
+    resultDiv.className = 'alert alert-info shadow-sm';
     resultDiv.innerHTML = '<i class="bi bi-hourglass-split mr-2"></i>Testing connection...';
     resultDiv.classList.remove('hidden');
     
@@ -997,10 +1025,10 @@ function testLdap() {
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                resultDiv.className = 'alert alert-success';
+                resultDiv.className = 'alert alert-success shadow-sm';
                 resultDiv.innerHTML = '<i class="bi bi-check-circle mr-2"></i>' + data.message;
             } else {
-                resultDiv.className = 'alert alert-danger';
+                resultDiv.className = 'alert alert-danger shadow-sm';
                 resultDiv.innerHTML = '<i class="bi bi-x-circle mr-2"></i>' + data.message;
                 if (!data.ldap_available) {
                     resultDiv.innerHTML += '<br><small>Install ldap3: <code>pip install ldap3</code></small>';
@@ -1008,7 +1036,7 @@ function testLdap() {
             }
         })
         .catch(err => {
-            resultDiv.className = 'alert alert-danger';
+            resultDiv.className = 'alert alert-danger shadow-sm';
             resultDiv.innerHTML = '<i class="bi bi-x-circle mr-2"></i>Connection test failed: ' + err;
         });
 }
