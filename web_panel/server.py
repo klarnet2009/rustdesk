@@ -1140,8 +1140,13 @@ def web_logout():
     session.clear()
     return redirect(url_for('web_login'))
 
+def update_offline_devices(conn):
+    conn.execute("UPDATE devices SET online = 0 WHERE datetime(last_seen) < datetime('now', '-30 seconds') OR last_seen IS NULL")
+    conn.commit()
+
 def get_devices_list():
     conn = get_db()
+    update_offline_devices(conn)
     devices = conn.execute("SELECT * FROM devices ORDER BY last_seen DESC").fetchall()
     conn.close()
     
@@ -1177,6 +1182,7 @@ def get_devices_list():
 @web_login_required
 def web_dashboard():
     conn = get_db()
+    update_offline_devices(conn)
     
     # Stats
     total = conn.execute("SELECT COUNT(*) FROM devices").fetchone()[0]
@@ -1477,8 +1483,7 @@ def api_heartbeat():
         conn.execute('''INSERT INTO devices (id, uuid, online, last_seen) VALUES (?, ?, 1, datetime('now'))
                         ON CONFLICT(id) DO UPDATE SET uuid = excluded.uuid, online = 1, last_seen = datetime('now')''',
                      (device_id, uuid))
-        conn.execute("UPDATE devices SET online = 0 WHERE datetime(last_seen) < datetime('now', '-60 seconds')")
-        conn.commit()
+        update_offline_devices(conn)
         conn.close()
     
     return jsonify({"modified_at": int(time.time())})
@@ -1544,6 +1549,7 @@ def api_admin_devices():
         return jsonify({"error": "Access denied"}), 403
     
     conn = get_db()
+    update_offline_devices(conn)
     devices = conn.execute("SELECT * FROM devices ORDER BY last_seen DESC").fetchall()
     conn.close()
     
@@ -1580,6 +1586,7 @@ def api_peers():
         return '', 200
         
     conn = get_db()
+    update_offline_devices(conn)
     # Fetch devices belonging to the user
     devices = conn.execute("SELECT * FROM devices WHERE user_id = ?", (request.current_user['user_id'],)).fetchall()
     conn.close()
