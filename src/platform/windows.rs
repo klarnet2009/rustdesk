@@ -737,6 +737,26 @@ async fn run_service(_arguments: Vec<OsString>) -> ResultType<()> {
                                     }
                                 }
                             }
+                            ipc::Data::UpdateMe(file) => {
+                                log::info!("Service received UpdateMe request for file: {}", file);
+                                if file.ends_with(".msi") {
+                                    if let Err(e) = update_me_msi(&file, true) {
+                                        log::error!("Service failed to run update msi: {}", e);
+                                    }
+                                } else if file.ends_with(".exe") {
+                                    match launch_privileged_process(
+                                        session_id,
+                                        &format!("{} --update", file),
+                                    ) {
+                                        Ok(_) => {
+                                            log::info!("Service launched update exe successfully");
+                                        }
+                                        Err(e) => {
+                                            log::error!("Service failed to launch update exe: {}", e);
+                                        }
+                                    }
+                                }
+                            }
                             _ => {}
                         }
                     }
@@ -3617,6 +3637,30 @@ pub fn handle_custom_client_staging_dir_before_update(
 
 // Used for auto update and manual update in the main window.
 pub fn update_to(file: &str) -> ResultType<()> {
+    if !crate::is_server() && is_self_service_running() {
+        log::info!("Service is running, delegating update to service via IPC");
+        let file = file.to_owned();
+        std::thread::spawn(move || {
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build();
+            if let Ok(rt) = rt {
+                rt.block_on(async {
+                    if let Ok(mut conn) = crate::ipc::connect_service(1000).await {
+                        if let Err(e) = conn.send(&crate::ipc::Data::UpdateMe(file)).await {
+                            log::error!("Failed to send UpdateMe to service: {}", e);
+                        } else {
+                            log::info!("Successfully sent UpdateMe to service");
+                        }
+                    } else {
+                        log::error!("Failed to connect to service for update delegation");
+                    }
+                });
+            }
+        });
+        return Ok(());
+    }
+
     if file.ends_with(".exe") {
         let custom_client_staging_dir = get_custom_client_staging_dir();
         if crate::is_custom_client() {
