@@ -27,11 +27,14 @@ Provide a central, reliable management portal where administrators can view all 
 - ✓ **CONF-01** — Centralized UI panel for Global Client Settings (General & Security) (v4.0).
 - ✓ **CONF-02** — Enforceable configuration propagation REST API `/api/global-settings` (v4.0).
 - ✓ **CONF-03** — Client-side settings fetch and local enforcement (v4.0).
+- ✓ **SSO-01** — Implement client-side Kerberos (SPNEGO) token acquisition on Windows (v4.0).
+- ✓ **SSO-02** — Implement server-side Negotiate validation and Active Directory login mapping (v4.0).
 
 ### Active
 
-- [ ] **SSO-01** — Implement client-side Kerberos (SPNEGO) token acquisition on Windows.
-- [ ] **SSO-02** — Implement server-side Negotiate validation and Active Directory login mapping.
+- [ ] **ENG-01** — Port the RustDesk custom C++ engine patches (for transparency, multi-window, texture rendering) to Flutter `3.41.x`.
+- [ ] **ENG-02** — Set up automated GitHub Actions CI workflow in the engine fork to compile and publish custom engine releases (`windows-x64-release.zip`).
+- [ ] **ENG-03** — Upgrade the Flutter version in the main RustDesk client repository's CI (to `3.41.x`) and restore the upgraded dependencies (`extended_text`, `google_fonts`, `device_info_plus`, etc.) with their modern theme/API bindings.
 
 ### Out of Scope
 

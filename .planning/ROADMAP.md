@@ -11,7 +11,9 @@ This roadmap defines the path to overhaul the RustDesk Web Management Panel UI, 
 - [x] **Phase 3: Connection flow & Integration check** - Integrate client-side launcher scheme and document configuration.
 - [x] **Phase 4: Passwordless Connection & Same-Account Login** - Implement auto-association, address book tagging, same-account host authorization, and client password prompt bypass.
 - [x] **Phase 5: LDAP, AD & Forced Auto-Update Enhancements** - Implement group-to-role mappings, manual/automatic user sync scheduler, local admin login fallback, and forced automatic update checks on startup.
-- [ ] **Phase 6: Global Configurations & SSO Authentication** - Implement central client settings management and Kerberos SSO architecture.
+- [x] **Phase 6: Global Configurations & SSO Authentication** - Implement central client settings management and Kerberos SSO architecture.
+- [ ] **Phase 7: Custom Flutter Engine Build Workflow Setup** - Setup automated build environment in the engine fork to compile C++ engine binaries for Flutter `3.41.x`.
+- [ ] **Phase 8: RustDesk Client Upgrade to Flutter 3.41.x** - Upgrade Flutter version and Dart packages in the main repo to target Flutter `3.41.x` and use the new custom engine.
 
 ## Phase Details
 
@@ -101,7 +103,34 @@ Plans:
 
 Plans:
 - [x] 06-01: Implement centralized global configuration UI and propagation API.
-- [ ] 06-02: Implement Windows SSPI client-side SSO token collection and backend Negotiate validator.
+- [x] 06-02: Implement Windows SSPI client-side SSO token collection and backend Negotiate validator.
+
+### Phase 7: Custom Flutter Engine Build Workflow Setup
+**Goal**: Setup automated build environment in the engine fork `klarnet2009/engine` to compile C++ engine binaries for Flutter `3.41.x`.
+**Depends on**: Phase 6
+**Requirements**: ENG-01, ENG-02
+**Success Criteria**:
+  1. GitHub Actions workflow compiles the Windows x64 Flutter Engine without errors.
+  2. Workflow creates a release and uploads `windows-x64-release.zip`.
+**Plans**: 2 plans
+
+Plans:
+- [ ] 07-01: Document C++ patch diffs for texture rendering, transparent window, and multi-window.
+- [ ] 07-02: Configure GitHub Actions workflow in the engine fork to compile and publish engine binaries.
+
+### Phase 8: RustDesk Client Upgrade to Flutter 3.41.x
+**Goal**: Upgrade Flutter version and Dart packages in the main repo to target Flutter `3.41.x` and use the new custom engine.
+**Depends on**: Phase 7
+**Requirements**: ENG-03
+**Success Criteria**:
+  1. Main repo's CI (workflows `bridge.yml`, `flutter-build.yml`) runs on Flutter `3.41.x` and downloads the custom engine from the user's fork.
+  2. Theme classes (`DialogThemeData` and `TabBarThemeData`) in `common.dart` and modern dependencies (`extended_text`, `google_fonts`, etc.) compile successfully.
+  3. CI builds the Windows x64 MSI installer and Android APKs successfully.
+**Plans**: 2 plans
+
+Plans:
+- [ ] 08-01: Adjust `pubspec.yaml`, `pubspec.lock`, and `common.dart` for Flutter `3.41.x` compatibility.
+- [ ] 08-02: Upgrade workflows `bridge.yml` and `flutter-build.yml` to download the new custom engine and run on Flutter `3.41.x`.
 
 ## Progress
 
@@ -113,7 +142,9 @@ Plans:
 | 4. Passwordless Connection & Same-Account Login | 1/1 | Completed | 2026-06-16 |
 | 5. LDAP, AD & Forced Auto-Update Enhancements | 3/3 | Completed | 2026-06-16 |
 | 6. Global Configurations & SSO Authentication | 2/2 | Completed | 2026-06-16 |
+| 7. Custom Flutter Engine Build Workflow Setup | 0/2 | Active | |
+| 8. RustDesk Client Upgrade to Flutter 3.41.x | 0/2 | Active | |
 
 ---
 *Roadmap defined: 2026-06-16*
-*Last updated: 2026-06-16 for Milestone v4.0*
+*Last updated: 2026-06-17 for Milestone v5.0*

@@ -35,15 +35,18 @@
 - ✓ **AUTO-01**: Implement Windows forced/silent update on client startup (bypass options checks and automatically run update installation).
 - ✓ **AUTO-02**: Implement Android forced/silent update on client startup (automatically query version and run APK installer without manual prompts).
 
-### Global Client Configuration - v4.0
+### Global Client Configuration & SSO - v4.0
 - ✓ **CONF-01**: Centralized UI panel for Global Client Settings (General & Security) in Settings view.
 - ✓ **CONF-02**: Enforceable configuration propagation REST API `/api/global-settings`.
 - ✓ **CONF-03**: Client-side settings fetch and local enforcement.
+- ✓ **SSO-01**: Implement client-side Kerberos (SPNEGO) token acquisition on Windows using Windows SSPI.
+- ✓ **SSO-02**: Implement server-side Negotiate validation and Active Directory login mapping.
 
-## Active Requirements (v4.0 - Active Directory Kerberos SSO Authentication)
+## Active Requirements (v5.0 - Flutter 3.41 Engine Integration)
 
-- [ ] **SSO-01**: Implement client-side Kerberos (SPNEGO) token acquisition on Windows using Windows SSPI.
-- [ ] **SSO-02**: Implement server-side Negotiate validation and Active Directory login mapping.
+- [ ] **ENG-01**: Port the RustDesk custom C++ engine patches (for window transparency, multi-window, texture rendering) to Flutter `3.41.x`.
+- [ ] **ENG-02**: Set up automated GitHub Actions CI workflow in the engine fork to compile and publish custom engine releases (`windows-x64-release.zip`).
+- [ ] **ENG-03**: Upgrade the Flutter version in the main RustDesk client repository's CI (to `3.41.x`) and restore the upgraded dependencies (`extended_text`, `google_fonts`, `device_info_plus`, etc.) with their modern theme/API bindings.
 
 ## Deferred/Out of Scope Requirements
 
@@ -69,8 +72,11 @@
 | CONF-01 | Phase 6 | Validated |
 | CONF-02 | Phase 6 | Validated |
 | CONF-03 | Phase 6 | Validated |
-| SSO-01 | Phase 6 | Active |
-| SSO-02 | Phase 6 | Active |
+| SSO-01 | Phase 6 | Validated |
+| SSO-02 | Phase 6 | Validated |
+| ENG-01 | Phase 7 | Active |
+| ENG-02 | Phase 7 | Active |
+| ENG-03 | Phase 8 | Active |
 
 ---
-*Requirements updated: 2026-06-16 for Milestone v4.0*
+*Requirements updated: 2026-06-17 for Milestone v5.0*
