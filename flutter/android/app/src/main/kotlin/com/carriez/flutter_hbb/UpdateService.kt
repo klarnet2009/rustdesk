@@ -81,7 +81,7 @@ class UpdateService(private val context: Context) {
         downloadJob = CoroutineScope(Dispatchers.Default).launch {
             try {
                 val apkFile = downloadApk(updateInfo.downloadUrl, updateInfo.fileName) { progress ->
-                    withContext(Dispatchers.Main) {
+                    android.os.Handler(android.os.Looper.getMainLooper()).post {
                         onProgress(progress)
                     }
                 }
