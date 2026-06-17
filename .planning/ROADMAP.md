@@ -12,8 +12,8 @@ This roadmap defines the path to overhaul the RustDesk Web Management Panel UI, 
 - [x] **Phase 4: Passwordless Connection & Same-Account Login** - Implement auto-association, address book tagging, same-account host authorization, and client password prompt bypass.
 - [x] **Phase 5: LDAP, AD & Forced Auto-Update Enhancements** - Implement group-to-role mappings, manual/automatic user sync scheduler, local admin login fallback, and forced automatic update checks on startup.
 - [x] **Phase 6: Global Configurations & SSO Authentication** - Implement central client settings management and Kerberos SSO architecture.
-- [ ] **Phase 7: Custom Flutter Engine Build Workflow Setup** - Setup automated build environment in the engine fork to compile C++ engine binaries for Flutter `3.41.x`.
-- [ ] **Phase 8: RustDesk Client Upgrade to Flutter 3.41.x** - Upgrade Flutter version and Dart packages in the main repo to target Flutter `3.41.x` and use the new custom engine.
+- [x] **Phase 7: Custom Flutter Engine Build Workflow Setup** - Setup automated build environment in the engine fork to compile C++ engine binaries for Flutter `3.41.x`.
+- [x] **Phase 8: RustDesk Client Upgrade to Flutter 3.41.x** - Upgrade Flutter version and Dart packages in the main repo to target Flutter `3.41.x` and use the new custom engine.
 
 ## Phase Details
 
@@ -115,8 +115,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 07-01: Document C++ patch diffs for texture rendering, transparent window, and multi-window.
-- [ ] 07-02: Configure GitHub Actions workflow in the engine fork to compile and publish engine binaries.
+- [x] 07-01: Document C++ patch diffs for texture rendering, transparent window, and multi-window.
+- [x] 07-02: Configure GitHub Actions workflow in the engine fork to compile and publish engine binaries.
 
 ### Phase 8: RustDesk Client Upgrade to Flutter 3.41.x
 **Goal**: Upgrade Flutter version and Dart packages in the main repo to target Flutter `3.41.x` and use the new custom engine.
@@ -129,8 +129,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 08-01: Adjust `pubspec.yaml`, `pubspec.lock`, and `common.dart` for Flutter `3.41.x` compatibility.
-- [ ] 08-02: Upgrade workflows `bridge.yml` and `flutter-build.yml` to download the new custom engine and run on Flutter `3.41.x`.
+- [x] 08-01: Adjust `pubspec.yaml`, `pubspec.lock`, and `common.dart` for Flutter `3.41.x` compatibility.
+- [x] 08-02: Upgrade workflows `bridge.yml` and `flutter-build.yml` to download the new custom engine and run on Flutter `3.41.x`.
 
 ## Progress
 
@@ -142,8 +142,8 @@ Plans:
 | 4. Passwordless Connection & Same-Account Login | 1/1 | Completed | 2026-06-16 |
 | 5. LDAP, AD & Forced Auto-Update Enhancements | 3/3 | Completed | 2026-06-16 |
 | 6. Global Configurations & SSO Authentication | 2/2 | Completed | 2026-06-16 |
-| 7. Custom Flutter Engine Build Workflow Setup | 0/2 | Active | |
-| 8. RustDesk Client Upgrade to Flutter 3.41.x | 0/2 | Active | |
+| 7. Custom Flutter Engine Build Workflow Setup | 2/2 | Completed | 2026-06-17 |
+| 8. RustDesk Client Upgrade to Flutter 3.41.x | 2/2 | Completed | 2026-06-17 |
 
 ---
 *Roadmap defined: 2026-06-16*

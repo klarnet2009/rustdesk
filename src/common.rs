@@ -1000,26 +1000,41 @@ pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
     let is_tls_not_cached = tls_type.is_none();
     let tls_type = tls_type.unwrap_or(TlsType::Rustls);
     let client = create_http_client_async(tls_type, false);
-    let latest_release_response = match client.post(&url).json(&request).send().await {
-        Ok(resp) => {
-            upsert_tls_cache(tls_url, tls_type, false);
-            resp
+    let response_url = if url.contains("api.github.com") {
+        let resp = client
+            .get(&url)
+            .header("User-Agent", "rustdesk-client")
+            .send()
+            .await?;
+        let bytes = resp.bytes().await?;
+        #[derive(serde::Deserialize)]
+        struct GithubRelease {
+            html_url: String,
         }
-        Err(err) => {
-            if is_tls_not_cached && err.is_request() {
-                let tls_type = TlsType::NativeTls;
-                let client = create_http_client_async(tls_type, false);
-                let resp = client.post(&url).json(&request).send().await?;
+        let release: GithubRelease = serde_json::from_slice(&bytes)?;
+        release.html_url
+    } else {
+        let latest_release_response = match client.post(&url).json(&request).send().await {
+            Ok(resp) => {
                 upsert_tls_cache(tls_url, tls_type, false);
                 resp
-            } else {
-                return Err(err.into());
             }
-        }
+            Err(err) => {
+                if is_tls_not_cached && err.is_request() {
+                    let tls_type = TlsType::NativeTls;
+                    let client = create_http_client_async(tls_type, false);
+                    let resp = client.post(&url).json(&request).send().await?;
+                    upsert_tls_cache(tls_url, tls_type, false);
+                    resp
+                } else {
+                    return Err(err.into());
+                }
+            }
+        };
+        let bytes = latest_release_response.bytes().await?;
+        let resp: hbb_common::VersionCheckResponse = serde_json::from_slice(&bytes)?;
+        resp.url
     };
-    let bytes = latest_release_response.bytes().await?;
-    let resp: hbb_common::VersionCheckResponse = serde_json::from_slice(&bytes)?;
-    let response_url = resp.url;
     let latest_release_version = response_url.rsplit('/').next().unwrap_or_default();
 
     if get_version_number(&latest_release_version) > get_version_number(crate::VERSION) {

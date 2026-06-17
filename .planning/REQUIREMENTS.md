@@ -1,7 +1,7 @@
 # Requirements: RustDesk Web Management Panel
 
 **Defined:** 2026-06-16
-**Last Updated:** 2026-06-16 (Milestone v3.0)
+**Last Updated:** 2026-06-17 (Milestone v5.0)
 **Core Value:** Provide a central, reliable management portal where administrators can view all managed computers and connect to them with a single click.
 
 ## Validated Requirements (Completed)
@@ -42,11 +42,13 @@
 - ✓ **SSO-01**: Implement client-side Kerberos (SPNEGO) token acquisition on Windows using Windows SSPI.
 - ✓ **SSO-02**: Implement server-side Negotiate validation and Active Directory login mapping.
 
+### Custom Flutter Engine & Client Upgrade - v5.0
+- ✓ **ENG-01**: Port the RustDesk custom C++ engine patches (for window transparency, multi-window, texture rendering) to Flutter `3.41.x`.
+- ✓ **ENG-02**: Set up automated GitHub Actions CI workflow in the engine fork to compile and publish custom engine releases (`windows-x64-release.zip`).
+- ✓ **ENG-03**: Upgrade the Flutter version in the main RustDesk client repository's CI (to `3.41.x`) and restore the upgraded dependencies (`extended_text`, `google_fonts`, `device_info_plus`, etc.) with their modern theme/API bindings.
+
 ## Active Requirements (v5.0 - Flutter 3.41 Engine Integration)
 
-- [ ] **ENG-01**: Port the RustDesk custom C++ engine patches (for window transparency, multi-window, texture rendering) to Flutter `3.41.x`.
-- [ ] **ENG-02**: Set up automated GitHub Actions CI workflow in the engine fork to compile and publish custom engine releases (`windows-x64-release.zip`).
-- [ ] **ENG-03**: Upgrade the Flutter version in the main RustDesk client repository's CI (to `3.41.x`) and restore the upgraded dependencies (`extended_text`, `google_fonts`, `device_info_plus`, etc.) with their modern theme/API bindings.
 
 ## Deferred/Out of Scope Requirements
 
@@ -74,9 +76,9 @@
 | CONF-03 | Phase 6 | Validated |
 | SSO-01 | Phase 6 | Validated |
 | SSO-02 | Phase 6 | Validated |
-| ENG-01 | Phase 7 | Active |
-| ENG-02 | Phase 7 | Active |
-| ENG-03 | Phase 8 | Active |
+| ENG-01 | Phase 7 | Validated |
+| ENG-02 | Phase 7 | Validated |
+| ENG-03 | Phase 8 | Validated |
 
 ---
 *Requirements updated: 2026-06-17 for Milestone v5.0*
