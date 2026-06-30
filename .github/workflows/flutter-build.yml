@@ -27,8 +27,12 @@ env:
   LLVM_VERSION: "15.0.6"
   FLUTTER_VERSION: "3.41.0"
   ANDROID_FLUTTER_VERSION: "3.41.0"
-  # for arm64 linux because official Dart SDK does not work
-  FLUTTER_ELINUX_VERSION: "3.16.9"
+  # for arm64 linux because official Dart SDK does not work.
+  # NOTE: sony/flutter-elinux has no 3.41.x tag yet (newest is 3.27.1), so the
+  # arm64 Linux desktop build (release/upload only) is pinned to the latest
+  # available elinux tag and cannot track the main 3.41 FLUTTER_VERSION until
+  # upstream flutter-elinux publishes a matching release.
+  FLUTTER_ELINUX_VERSION: "3.27.1"
   TAG_NAME: "${{ inputs.upload-tag }}"
   VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
   # vcpkg version: 2025.08.27
@@ -116,7 +120,20 @@ jobs:
           flutter precache --windows
           Invoke-WebRequest -Uri https://github.com/klarnet2009/engine/releases/download/main/windows-x64-release.zip -OutFile windows-x64-release.zip
           Expand-Archive -Path windows-x64-release.zip -DestinationPath windows-x64-release
-          mv -Force windows-x64-release/*  C:/hostedtoolcache/windows/flutter/stable-${{ env.FLUTTER_VERSION }}-x64/bin/cache/artifacts/engine/windows-x64-release/
+          $engineDest = "C:/hostedtoolcache/windows/flutter/stable-${{ env.FLUTTER_VERSION }}-x64/bin/cache/artifacts/engine/windows-x64-release"
+          if (-not (Test-Path $engineDest)) {
+            Write-Error "Engine destination not found: $engineDest. The hostedtoolcache layout for Flutter ${{ env.FLUTTER_VERSION }} changed; the custom engine swap target is wrong."
+            exit 1
+          }
+          mv -Force windows-x64-release/* "$engineDest/"
+          # Fail loudly if the custom engine DLL did not land, otherwise the
+          # stock engine would be used silently and defeat the milestone goal.
+          if (-not (Test-Path "$engineDest/flutter_windows.dll")) {
+            Write-Error "Custom flutter_windows.dll missing after swap into $engineDest."
+            exit 1
+          }
+          Write-Host "Custom Windows engine installed:"
+          Get-ChildItem "$engineDest" | Select-Object Name, Length
 
       - name: Patch flutter
         shell: bash
@@ -667,7 +684,9 @@ jobs:
           cd "$(dirname "$(which flutter)")"
           # https://github.com/flutter/flutter/issues/133533
           sed -i -e 's/_setFramesEnabledState(false);/\/\/_setFramesEnabledState(false);/g' ../packages/flutter/lib/src/scheduler/binding.dart
-          grep -n '_setFramesEnabledState(false);' ../packages/flutter/lib/src/scheduler/binding.dart
+          # Informational only: do not fail the step if the line was already
+          # renamed/removed in a newer Flutter (e.g. 3.41) where the sed no-ops.
+          grep -n '_setFramesEnabledState(false);' ../packages/flutter/lib/src/scheduler/binding.dart || true
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
@@ -1523,11 +1542,12 @@ jobs:
             tar xf flutter_linux_${{ env.FLUTTER_VERSION }}-stable.tar.xz
             case ${{ matrix.job.arch }} in
               aarch64)
-                # clone repo and reset to flutter ${{ env.FLUTTER_VERSION }}
+                # clone repo and reset to flutter-elinux ${{ env.FLUTTER_ELINUX_VERSION }}
+                # (sony/flutter-elinux has no ${{ env.FLUTTER_VERSION }} tag).
                 git clone https://github.com/sony/flutter-elinux.git || true
                 pushd flutter-elinux
                   git fetch
-                  git reset --hard ${{ env.FLUTTER_VERSION }}
+                  git reset --hard ${{ env.FLUTTER_ELINUX_VERSION }}
                   bin/flutter-elinux doctor -v
                   bin/flutter-elinux precache --linux
                 popd

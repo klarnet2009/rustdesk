@@ -39,8 +39,12 @@ prepare_flutter() {
 	git checkout "${VERSION}"
 
 	# Patch flutter
-
-	if dpkg --compare-versions "${VERSION}" ge "3.24.4"; then
+	# The dropdown_menu enableFilter patch only applies cleanly to the 3.24.x
+	# series. At Flutter 3.41+ the upstream source has drifted and the patch
+	# would fail to apply, so gate it to the [3.24.4, 3.25.0) range to mirror
+	# the literal "== 3.24.5" guards used in the CI workflows.
+	if dpkg --compare-versions "${VERSION}" ge "3.24.4" \
+		&& dpkg --compare-versions "${VERSION}" lt "3.25.0"; then
 		git apply "${ROOTDIR}/.github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff"
 	fi
 

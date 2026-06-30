@@ -83,6 +83,9 @@ protobuf {
 
 android {
     compileSdkVersion 34
+    // AGP 8 requires an explicit namespace; previously derived from the
+    // `package` attribute in AndroidManifest.xml (no longer supported in AGP 8).
+    namespace "com.carriez.flutter_hbb"
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
 
@@ -93,6 +96,12 @@ android {
     compileOptions {
         targetCompatibility JavaVersion.VERSION_1_8
         sourceCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        // Keep Kotlin's JVM target consistent with Java compileOptions above to
+        // avoid AGP 8's "Inconsistent JVM-target compatibility" build failure.
+        jvmTarget = "1.8"
     }
 
     defaultConfig {
@@ -131,7 +140,7 @@ dependencies {
     implementation 'com.google.protobuf:protobuf-javalite:3.20.1'
     implementation "androidx.media:media:1.6.0"
     implementation 'com.github.getActivity:XXPermissions:18.5'
-    implementation("org.jetbrains.kotlin:kotlin-stdlib") { version { strictly("1.9.10") } }
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.1.21"
     implementation 'com.caverock:androidsvg-aar:1.4'
     implementation "rustls:rustls-platform-verifier:0.1.1"
 }
