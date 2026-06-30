@@ -6,20 +6,18 @@ allprojects {
     }
 }
 
-rootProject.buildDir = '../build'
-subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
-    project.evaluationDependsOn(':app')
-}
-
 // AGP 8 requires every Android module (including third-party Flutter plugins)
 // to declare a `namespace`. Some older pub plugins (e.g. external_path 1.0.3)
 // still rely on the now-unsupported `package` attribute in their manifest and
 // would fail with "Namespace not specified". Derive a namespace for any such
 // plugin from its manifest package so the build can proceed without forking
 // every stale dependency.
+//
+// NOTE: this `afterEvaluate` registration must run BEFORE the
+// `evaluationDependsOn(':app')` block below. That block force-evaluates `:app`
+// early; if this hook were registered afterwards, Gradle would throw
+// "Cannot run Project.afterEvaluate(Closure) when the project is already
+// evaluated" for `:app`.
 subprojects {
     afterEvaluate { project ->
         def androidExt = project.extensions.findByName("android")
@@ -38,6 +36,14 @@ subprojects {
             }
         }
     }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(':app')
 }
 
 tasks.register("clean", Delete) {
