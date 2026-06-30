@@ -746,6 +746,16 @@ jobs:
             sed -i -e "s/osx_minimum_system_version = \"[0-9]*.[0-9]*\"/osx_minimum_system_version = \"${MIN_MACOS_VERSION}\"/" Cargo.toml
             sed -i -e "s/MACOSX_DEPLOYMENT_TARGET = [0-9]*.[0-9]*;/MACOSX_DEPLOYMENT_TARGET = ${MIN_MACOS_VERSION};/" flutter/macos/Runner.xcodeproj/project.pbxproj
           fi
+          # Flutter 3.41 builds a universal (x86_64 + arm64) macOS release binary
+          # by default, but the Rust dylib is built single-arch for the host, so
+          # the non-native slice fails to link. Pin the Xcode project to the
+          # runner's native architecture so the link matches the dylib.
+          if [ "${{ matrix.job.arch }}" = "aarch64" ]; then
+            MAC_ARCH="arm64"
+          else
+            MAC_ARCH="x86_64"
+          fi
+          sed -i -e "s/ARCHS = \"\$(ARCHS_STANDARD)\";/ARCHS = \"${MAC_ARCH}\";/g" flutter/macos/Runner.xcodeproj/project.pbxproj
           ./build.py --flutter --hwcodec --unix-file-copy-paste ${{ matrix.job.extra-build-args }}
 
       - name: create unsigned dmg
@@ -938,6 +948,16 @@ jobs:
         run: |
           cd $(dirname $(dirname $(which flutter)))
           [[ "3.24.5" == ${{env.ANDROID_FLUTTER_VERSION}} ]] && git apply ${{ github.workspace }}/.github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff || true
+
+      - name: Ensure Android SDK 36 (device_info_plus / Flutter 3.41 require compileSdk 36)
+        shell: bash
+        run: |
+          set +e
+          yes | sdkmanager --licenses >/dev/null 2>&1
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          # Never fail the build here: if the platform is already present or the
+          # license prompt misbehaves, the subsequent gradle build still works.
+          exit 0
 
       - uses: nttld/setup-ndk@ed92fe6cadad69be94a966a7ee3271275e62f779 # v1
         id: setup-ndk

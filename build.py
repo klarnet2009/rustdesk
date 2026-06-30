@@ -438,7 +438,9 @@ def build_flutter_windows(version, features, skip_portable_pack):
             print("cargo build failed, please check rust source code.")
             exit(-1)
     os.chdir('flutter')
-    system2('flutter build windows --release')
+    # --verbose surfaces the underlying flutter_assemble error, which MSBuild
+    # otherwise hides behind a generic MSB8066 "custom build exited with code 1".
+    system2('flutter build windows --release --verbose')
     os.chdir('..')
     shutil.copy2('target/release/deps/dylib_virtual_display.dll',
                  flutter_build_dir_2)

@@ -82,7 +82,8 @@ protobuf {
 }
 
 android {
-    compileSdkVersion 34
+    // device_info_plus (and other Flutter 3.41 plugins) require compileSdk 36.
+    compileSdkVersion 36
     // AGP 8 requires an explicit namespace; previously derived from the
     // `package` attribute in AndroidManifest.xml (no longer supported in AGP 8).
     namespace "com.carriez.flutter_hbb"
