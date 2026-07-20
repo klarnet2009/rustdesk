@@ -381,7 +381,7 @@ class MyTheme {
     appBarTheme: AppBarTheme(
       shadowColor: Colors.transparent,
     ),
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       elevation: 15,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18.0),
@@ -412,7 +412,7 @@ class MyTheme {
     cardColor: grayBg,
     hintColor: Color(0xFFAAAAAA),
     visualDensity: VisualDensity.adaptivePlatformDensity,
-    tabBarTheme: const TabBarTheme(
+    tabBarTheme: const TabBarThemeData(
       labelColor: Colors.black87,
     ),
     tooltipTheme: tooltipTheme(),
@@ -479,7 +479,7 @@ class MyTheme {
     appBarTheme: AppBarTheme(
       shadowColor: Colors.transparent,
     ),
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       elevation: 15,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18.0),
@@ -513,7 +513,7 @@ class MyTheme {
     ),
     cardColor: Color(0xFF24252B),
     visualDensity: VisualDensity.adaptivePlatformDensity,
-    tabBarTheme: const TabBarTheme(
+    tabBarTheme: const TabBarThemeData(
       labelColor: Colors.white70,
     ),
     tooltipTheme: tooltipTheme(),
@@ -2601,6 +2601,15 @@ connect(BuildContext context, String id,
     } catch (_) {}
   }
   id = id.replaceAll(' ', '');
+  // Connect-by-name: non-numeric input without an id@server suffix is treated
+  // as a device hostname and resolved to its RustDesk ID via the API server.
+  if (id.isNotEmpty && !RegExp(r'^[0-9]+$').hasMatch(id) && !id.contains('@')) {
+    final resolved = await resolvePeerNameToId(id);
+    if (resolved != null) {
+      debugPrint('connect: resolved "$id" to id $resolved');
+      id = resolved;
+    }
+  }
   final oldId = id;
   id = await bind.mainHandleRelayId(id: id);
   forceRelay = id != oldId || forceRelay;
@@ -2745,6 +2754,28 @@ Map<String, String> getHttpHeaders() {
   return {
     'Authorization': 'Bearer ${bind.mainGetLocalOption(key: 'access_token')}'
   };
+}
+
+/// Try to resolve a device hostname to its RustDesk ID via the API server.
+/// Returns null when resolution is unavailable (not logged in, no API server)
+/// or the name is unknown — the caller then uses the input as-is.
+Future<String?> resolvePeerNameToId(String name) async {
+  try {
+    final url = await bind.mainGetApiServer();
+    if (url.trim().isEmpty) return null;
+    final resp = await http
+        .get(Uri.parse('$url/api/resolve?name=${Uri.encodeComponent(name)}'),
+            headers: getHttpHeaders())
+        .timeout(const Duration(seconds: 5));
+    if (resp.statusCode == 200) {
+      final body = jsonDecode(decode_http_response(resp));
+      final id = body['id']?.toString() ?? '';
+      if (id.isNotEmpty) return id;
+    }
+  } catch (e) {
+    debugPrint('resolvePeerNameToId: $e');
+  }
+  return null;
 }
 
 // Simple wrapper of built-in types for reference use.

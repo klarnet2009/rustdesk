@@ -996,29 +996,48 @@ pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
     let proxy_conf = Config::get_socks();
     let tls_url = get_url_for_tls(&url, &proxy_conf);
     let tls_type = get_cached_tls_type(tls_url);
-    let is_tls_not_cached = tls_type.is_none();
     let tls_type = tls_type.unwrap_or(TlsType::Rustls);
     let client = create_http_client_async(tls_type, false);
-    let latest_release_response = match client.post(&url).json(&request).send().await {
-        Ok(resp) => {
-            upsert_tls_cache(tls_url, tls_type, false);
-            resp
+    let response_url = if url.contains("api.github.com") {
+        let resp = client
+            .get(&url)
+            .header("User-Agent", "rustdesk-client")
+            .send()
+            .await?;
+        let bytes = resp.bytes().await?;
+        #[derive(serde::Deserialize)]
+        struct GithubRelease {
+            html_url: String,
         }
-        Err(err) => {
-            if is_tls_not_cached && err.is_request() {
-                let tls_type = TlsType::NativeTls;
-                let client = create_http_client_async(tls_type, false);
-                let resp = client.post(&url).json(&request).send().await?;
-                upsert_tls_cache(tls_url, tls_type, false);
-                resp
-            } else {
-                return Err(err.into());
+        let release: GithubRelease = serde_json::from_slice(&bytes)?;
+        release.html_url
+    } else {
+        async fn send_version_check(
+            url: &str,
+            request: &hbb_common::VersionCheckRequest,
+        ) -> Result<reqwest::Response, reqwest::Error> {
+            let proxy_conf = Config::get_socks();
+            let tls_url = get_url_for_tls(url, &proxy_conf);
+            let tls_type = get_cached_tls_type(tls_url);
+            let client =
+                create_http_client_async(tls_type.unwrap_or(TlsType::Rustls), false);
+            client.post(url).json(request).send().await
+        }
+        let latest_release_response = match send_version_check(&url, &request).await {
+            Ok(resp) => resp,
+            Err(err) => {
+                // Derived API URLs are https:// but many self-hosted panels are
+                // plain HTTP — retry once over http before giving up.
+                match downgrade_https_to_http(&url) {
+                    Some(http_url) => send_version_check(&http_url, &request).await?,
+                    None => return Err(err.into()),
+                }
             }
-        }
+        };
+        let bytes = latest_release_response.bytes().await?;
+        let resp: hbb_common::VersionCheckResponse = serde_json::from_slice(&bytes)?;
+        resp.url
     };
-    let bytes = latest_release_response.bytes().await?;
-    let resp: hbb_common::VersionCheckResponse = serde_json::from_slice(&bytes)?;
-    let response_url = resp.url;
     let latest_release_version = response_url.rsplit('/').next().unwrap_or_default();
 
     if get_version_number(&latest_release_version) > get_version_number(crate::VERSION) {
@@ -1365,6 +1384,13 @@ fn parse_json_header_entries(header: &str) -> ResultType<Vec<HeaderEntry>> {
 }
 
 /// Returns (status_code, body_text). Separating status so the wrapper can decide on fallback.
+/// Self-hosted panels often serve plain HTTP on the API port while the client
+/// derives an `https://` URL from the rendezvous host. Return an `http://`
+/// variant so callers can retry on connection-level failure.
+pub fn downgrade_https_to_http(url: &str) -> Option<String> {
+    url.strip_prefix("https://").map(|rest| format!("http://{rest}"))
+}
+
 async fn post_request_http(url: &str, body: &str, header: &str) -> ResultType<(u16, String)> {
     let proxy_conf = Config::get_socks();
     let tls_url = get_url_for_tls(url, &proxy_conf);
@@ -1379,7 +1405,26 @@ async fn post_request_http(url: &str, body: &str, header: &str) -> ResultType<(u
         danger_accept_invalid_cert,
         danger_accept_invalid_cert,
     )
-    .await?;
+    .await;
+    let response = match response {
+        Ok(resp) => resp,
+        Err(e) => match downgrade_https_to_http(url) {
+            Some(http_url) => {
+                log::warn!("POST {url} failed ({e}), retrying over plain http");
+                post_request_(
+                    &http_url,
+                    &http_url,
+                    body.to_owned(),
+                    header,
+                    None,
+                    Some(true),
+                    Some(true),
+                )
+                .await?
+            }
+            None => return Err(e),
+        },
+    };
     let status = response.status().as_u16();
     let text = response.text().await?;
     Ok((status, text))

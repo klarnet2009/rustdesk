@@ -20,3 +20,9 @@ All new UI components must strictly follow these rules:
 * Implement thread-safe database connections using context managers or discrete calls to `get_db()`.
 * Parameterize all SQLite queries to avoid SQL Injection vulnerability.
 * Output logs with `datetime.utcnow()` when verifying actions or auditing connections.
+
+## 3. Development Workflow
+* **GSD Methodology**: All development and refactoring work must be conducted strictly using the GSD (Get Stuff Done) workflow to ensure complete tracking and prevent context or progress loss.
+* **Planning Artifacts**: Every phase and milestone must be planned, reviewed, and updated within the `.planning/` directory (e.g., `PROJECT.md`, `ROADMAP.md`, `STATE.md`, `REQUIREMENTS.md`, and phase plans `PLAN.md`).
+* **Change Synchronization**: Code changes must be synchronized with the corresponding design, testing, and system documentation.
+

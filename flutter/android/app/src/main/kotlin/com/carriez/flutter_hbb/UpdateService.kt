@@ -14,7 +14,7 @@ import java.net.URL
 class UpdateService(private val context: Context) {
     companion object {
         private const val logTag = "UpdateService"
-        private const val GITHUB_API_URL = "https://api.github.com/repos/rustdesk/rustdesk/releases/latest"
+        private const val GITHUB_API_URL = "https://api.github.com/repos/klarnet2009/rustdesk/releases/latest"
         private const val AUTHORITY = "com.carriez.flutter_hbb.fileprovider"
     }
 

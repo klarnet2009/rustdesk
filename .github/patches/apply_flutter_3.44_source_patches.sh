@@ -3,7 +3,7 @@
 #
 # Windows arm64 needs Flutter >= 3.44 (the first stable release shipping an arm64 Dart SDK +
 # engine), which renamed DialogTheme/TabBarTheme -> *Data and needs newer extended_text/
-# google_fonts. Every other platform is still on Flutter 3.24.5, where the old names/versions
+# google_fonts. Every other platform is on Flutter 3.41, where the old names/versions
 # are required, so these changes are kept OUT of the committed sources and applied here instead.
 #
 # Used by BOTH the Windows arm64 build (flutter-build.yml) and its dedicated bridge artifact

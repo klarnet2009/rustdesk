@@ -1,8 +1,40 @@
 allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
         maven { url 'https://jitpack.io' }
+    }
+}
+
+// AGP 8 requires every Android module (including third-party Flutter plugins)
+// to declare a `namespace`. Some older pub plugins (e.g. external_path 1.0.3)
+// still rely on the now-unsupported `package` attribute in their manifest and
+// would fail with "Namespace not specified". Derive a namespace for any such
+// plugin from its manifest package so the build can proceed without forking
+// every stale dependency.
+//
+// NOTE: this `afterEvaluate` registration must run BEFORE the
+// `evaluationDependsOn(':app')` block below. That block force-evaluates `:app`
+// early; if this hook were registered afterwards, Gradle would throw
+// "Cannot run Project.afterEvaluate(Closure) when the project is already
+// evaluated" for `:app`.
+subprojects {
+    afterEvaluate { project ->
+        def androidExt = project.extensions.findByName("android")
+        if (androidExt != null && androidExt.namespace == null) {
+            def manifestFile = androidExt.sourceSets.getByName("main").manifest.srcFile
+            if (manifestFile != null && manifestFile.exists()) {
+                def parsedPackage = new XmlSlurper()
+                    .parse(manifestFile)
+                    .@package
+                    .text()
+                if (parsedPackage != null && !parsedPackage.isEmpty()) {
+                    androidExt.namespace = parsedPackage
+                    project.logger.lifecycle(
+                        "Injected namespace '${parsedPackage}' for module '${project.name}' (AGP 8 migration)")
+                }
+            }
+        }
     }
 }
 

@@ -342,6 +342,7 @@ pub enum Data {
     FS(FS),
     Test,
     SyncConfig(Option<Box<(Config, Config2)>>),
+    UpdateMe(String),
     #[cfg(target_os = "windows")]
     ClipboardFile(ClipboardFile),
     ClipboardFileEnabled(bool),

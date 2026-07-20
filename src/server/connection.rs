@@ -2208,8 +2208,13 @@ impl Connection {
         if access_token.is_empty() {
             return false;
         }
-        let api_server = Config::get_option("api-server");
-        if api_server.is_empty() {
+        // Derive the API server the same way heartbeat/sysinfo do — clients
+        // without an explicit 'api-server' option still have a usable one.
+        let api_server = crate::common::get_api_server(
+            Config::get_option("api-server"),
+            Config::get_option("custom-rendezvous-server"),
+        );
+        if api_server.is_empty() || crate::is_public(&api_server) {
             return false;
         }
         let user_info_str = Config::get_option("user_info");
@@ -2224,15 +2229,22 @@ impl Connection {
         };
 
         let api_server = api_server.trim_end_matches('/');
-        let url = format!("{}/api/currentUser", api_server);
+        let mut urls = vec![format!("{}/api/currentUser", api_server)];
+        if let Some(http_url) = crate::common::downgrade_https_to_http(&urls[0]) {
+            urls.push(http_url);
+        }
 
         let client = reqwest::Client::new();
-        if let Ok(resp) = client.post(&url).bearer_auth(access_token).send().await {
-            if resp.status().is_success() {
-                if let Ok(json) = resp.json::<serde_json::Value>().await {
-                    if let Some(name) = json.get("name").and_then(|v| v.as_str()) {
-                        if name == &local_name {
-                            return true;
+        for url in &urls {
+            if let Ok(resp) = client.post(url).bearer_auth(access_token).send().await {
+                if resp.status().is_success() {
+                    if let Ok(json) = resp.json::<serde_json::Value>().await {
+                        if let Some(name) = json.get("name").and_then(|v| v.as_str()) {
+                            // Case/format-tolerant compare: LDAP sync may normalize
+                            // usernames differently (jdoe vs JDoe) on the two sides.
+                            if name.to_lowercase() == local_name.to_lowercase() {
+                                return true;
+                            }
                         }
                     }
                 }
