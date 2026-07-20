@@ -2231,7 +2231,9 @@ impl Connection {
             if resp.status().is_success() {
                 if let Ok(json) = resp.json::<serde_json::Value>().await {
                     if let Some(name) = json.get("name").and_then(|v| v.as_str()) {
-                        if name == &local_name {
+                        // Case/format-tolerant compare: LDAP sync may normalize
+                        // usernames differently (jdoe vs JDoe) on the two sides.
+                        if name.to_lowercase() == local_name.to_lowercase() {
                             return true;
                         }
                     }
