@@ -76,7 +76,7 @@ dependencies:
     git:
       url: https://github.com/klarnet2009/uni_links
       path: uni_links
-      ref: cfae626852981277acebadab806675c8ce451b75
+      ref: 1056b04b037ded4b181a8c8c80b62531d6265b1c
   uni_links_desktop: ^0.1.6 # use 0.1.6 to make flutter 3.13 works
   path: ^1.8.1
   auto_size_text: ^3.0.0
