@@ -74,9 +74,9 @@ dependencies:
   flutter_svg: ^2.0.5
   uni_links:
     git:
-      url: https://github.com/rustdesk-org/uni_links
+      url: https://github.com/klarnet2009/uni_links
       path: uni_links
-      ref: f416118d843a7e9ed117c7bb7bdc2deda5a9e86f
+      ref: cfae626852981277acebadab806675c8ce451b75
   uni_links_desktop: ^0.1.6 # use 0.1.6 to make flutter 3.13 works
   path: ^1.8.1
   auto_size_text: ^3.0.0
