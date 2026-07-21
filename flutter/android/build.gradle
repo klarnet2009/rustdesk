@@ -35,6 +35,24 @@ subprojects {
                 }
             }
         }
+
+        // Flutter 3.44's gradle plugin compiles Kotlin at JVM target 17, but many
+        // third-party plugin modules leave their Java compilation at 1.8, which trips
+        // Kotlin/AGP's "Inconsistent JVM Target Compatibility" check (e.g. desktop_drop).
+        // Set the targets on the android EXTENSION (compileOptions/kotlinOptions), which
+        // is what AGP reads when it configures the compile tasks. Setting the raw
+        // JavaCompile task target does not work: AGP overwrites it from compileOptions.
+        // This afterEvaluate is registered before AGP's (via subprojects.all), so our
+        // 17 wins over the plugin's own compileOptions before AGP wires the tasks.
+        if (androidExt != null) {
+            androidExt.compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
+            if (androidExt.hasProperty('kotlinOptions')) {
+                androidExt.kotlinOptions.jvmTarget = "17"
+            }
+        }
     }
 }
 

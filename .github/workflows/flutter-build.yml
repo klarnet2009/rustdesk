@@ -25,17 +25,12 @@ env:
   SCITER_ARMV7_CMAKE_VERSION: "3.29.7"
   SCITER_NASM_DEBVERSION: "2.15.05-1"
   LLVM_VERSION: "15.0.6"
-  FLUTTER_VERSION: "3.41.0"
-  ANDROID_FLUTTER_VERSION: "3.41.0"
-  # Windows arm64 only: the first stable Flutter to ship a native arm64 Windows Dart SDK +
-  # engine is 3.44. Every other platform stays on FLUTTER_VERSION (3.41 on this branch).
-  # The arm64 job patches the few 3.44-only source/pubspec changes on the fly
-  # (see "Patch RustDesk sources for Flutter 3.44").
-  FLUTTER_WINDOWS_ARM_VERSION: "3.44.0"
+  FLUTTER_VERSION: "3.44.7"
+  ANDROID_FLUTTER_VERSION: "3.44.7"
   # for arm64 linux because official Dart SDK does not work.
-  # NOTE: sony/flutter-elinux has no 3.41.x tag yet (newest is 3.27.1), so the
+  # NOTE: sony/flutter-elinux has no 3.44.x tag yet (newest is 3.27.1), so the
   # arm64 Linux desktop build (release/upload only) is pinned to the latest
-  # available elinux tag and cannot track the main 3.41 FLUTTER_VERSION until
+  # available elinux tag and cannot track the main FLUTTER_VERSION until
   # upstream flutter-elinux publishes a matching release.
   FLUTTER_ELINUX_VERSION: "3.27.1"
   TAG_NAME: "${{ inputs.upload-tag }}"
@@ -125,10 +120,7 @@ jobs:
       - name: Restore bridge files
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          # arm64 is on Flutter 3.44, so it needs the bridge generated with the same Flutter
-          # (its *.freezed.dart must match the freezed the arm64 build resolves). x64 and every
-          # other platform use the default 3.41.0-generated bridge.
-          name: ${{ matrix.job.arch == 'aarch64' && 'bridge-artifact-flutter-3.44' || 'bridge-artifact' }}
+          name: bridge-artifact
           path: ./
 
       - name: Install LLVM and Clang
@@ -138,14 +130,13 @@ jobs:
 
       - name: Install flutter
         id: flutter
-        # arm64 builds with FLUTTER_WINDOWS_ARM_VERSION (>=3.44); x64 stays on FLUTTER_VERSION.
         # subosito only ships an x64 Windows SDK (Flutter's release manifest lists x64 only),
         # so it installs x64 on both arches. The arm64 runner re-bootstraps Dart to arm64 in
         # the next step.
         uses: subosito/flutter-action@2783a3f08e1baf891508463f8c6653c258246225  # v2.12.0; https://github.com/subosito/flutter-action/issues/277
         with:
           channel: "stable"
-          flutter-version: ${{ matrix.job.arch == 'aarch64' && env.FLUTTER_WINDOWS_ARM_VERSION || env.FLUTTER_VERSION }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           architecture: x64
 
       - name: Force arm64 Dart SDK + engine
@@ -180,38 +171,12 @@ jobs:
             exit 1
           }
 
-      # https://github.com/flutter/flutter/issues/155685
-      # x64 only: arm64 uses the stock native arm64 Windows engine, and the rustdesk/engine
-      # windows-x64-release.zip is built for the 3.24-era x64 engine (matches FLUTTER_VERSION).
-      - name: Replace engine with rustdesk custom flutter engine
-        if: ${{ matrix.job.arch == 'x86_64' }}
-        run: |
-          flutter doctor -v
-          flutter precache --windows
-          Invoke-WebRequest -Uri https://github.com/klarnet2009/engine/releases/download/main/windows-x64-release.zip -OutFile windows-x64-release.zip
-          Expand-Archive -Path windows-x64-release.zip -DestinationPath windows-x64-release
-          $engineDest = "C:/hostedtoolcache/windows/flutter/stable-${{ env.FLUTTER_VERSION }}-x64/bin/cache/artifacts/engine/windows-x64-release"
-          if (-not (Test-Path $engineDest)) {
-            Write-Error "Engine destination not found: $engineDest. The hostedtoolcache layout for Flutter ${{ env.FLUTTER_VERSION }} changed; the custom engine swap target is wrong."
-            exit 1
-          }
-          mv -Force windows-x64-release/* "$engineDest/"
-          # Fail loudly if the custom engine DLL did not land, otherwise the
-          # stock engine would be used silently and defeat the milestone goal.
-          if (-not (Test-Path "$engineDest/flutter_windows.dll")) {
-            Write-Error "Custom flutter_windows.dll missing after swap into $engineDest."
-            exit 1
-          }
-          Write-Host "Custom Windows engine installed:"
-          Get-ChildItem "$engineDest" | Select-Object Name, Length
-
-      - name: Patch RustDesk sources for Flutter 3.44 (arm64)
-        # arm64 is the only target on Flutter 3.44; apply its source/pubspec deltas on the fly
-        # (shared with the 3.44 bridge job) so the committed sources stay on Flutter 3.41.
-        # `flutter build` then runs `pub get`, regenerating pubspec.lock for the bumped deps.
-        if: ${{ matrix.job.arch == 'aarch64' }}
-        shell: bash
-        run: bash .github/patches/apply_flutter_3.44_source_patches.sh
+      # Windows x64 uses the stock Flutter 3.44.7 engine (installed by the flutter
+      # action above). The former custom-engine swap (klarnet2009/engine, to patch
+      # the flutter #155685 multi-window crash) was dropped: Flutter 3.29+ moved the
+      # engine into the flutter/flutter monorepo, so the standalone flutter/engine
+      # build could not produce a 3.44-compatible engine (kernel-format mismatch).
+      # Revisit only if #155685 actually reproduces at runtime on 3.44.
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
@@ -820,7 +785,7 @@ jobs:
             sed -i -e "s/osx_minimum_system_version = \"[0-9]*.[0-9]*\"/osx_minimum_system_version = \"${MIN_MACOS_VERSION}\"/" Cargo.toml
             sed -i -e "s/MACOSX_DEPLOYMENT_TARGET = [0-9]*.[0-9]*;/MACOSX_DEPLOYMENT_TARGET = ${MIN_MACOS_VERSION};/" flutter/macos/Runner.xcodeproj/project.pbxproj
           fi
-          # Flutter 3.41 builds a universal (x86_64 + arm64) macOS release binary
+          # Flutter 3.44 builds a universal (x86_64 + arm64) macOS release binary
           # by default, but the Rust dylib is built single-arch for the host, so
           # the non-native slice fails to link. Pin the Xcode project to the
           # runner's native architecture so the link matches the dylib.
@@ -1018,7 +983,7 @@ jobs:
           channel: "stable"
           flutter-version: ${{ env.ANDROID_FLUTTER_VERSION }}
 
-      - name: Ensure Android SDK 36 (device_info_plus / Flutter 3.41 require compileSdk 36)
+      - name: Ensure Android SDK 36 (device_info_plus / Flutter 3.44 require compileSdk 36)
         shell: bash
         run: |
           set +e
