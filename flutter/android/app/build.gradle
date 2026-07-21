@@ -95,14 +95,15 @@ android {
     }
 
     compileOptions {
-        targetCompatibility JavaVersion.VERSION_1_8
-        sourceCompatibility JavaVersion.VERSION_1_8
+        // Flutter 3.41's gradle plugin requires JVM target 17 (and CI builds on
+        // JDK 17). Java and Kotlin targets must match or the plugin aborts with
+        // "Inconsistent JVM Target Compatibility Between Java and Kotlin Tasks".
+        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        // Keep Kotlin's JVM target consistent with Java compileOptions above to
-        // avoid AGP 8's "Inconsistent JVM-target compatibility" build failure.
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
 
     defaultConfig {
