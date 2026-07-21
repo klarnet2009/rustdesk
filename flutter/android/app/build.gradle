@@ -100,6 +100,9 @@ android {
         // "Inconsistent JVM Target Compatibility Between Java and Kotlin Tasks".
         targetCompatibility JavaVersion.VERSION_17
         sourceCompatibility JavaVersion.VERSION_17
+        // qr_code_scanner (and other plugins) require core library desugaring to
+        // run their Java 8+ APIs on minSdk 22.
+        coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {
@@ -139,6 +142,7 @@ flutter {
 }
 
 dependencies {
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"
     implementation 'com.google.protobuf:protobuf-javalite:3.20.1'
     implementation "androidx.media:media:1.6.0"
     implementation 'com.github.getActivity:XXPermissions:18.5'
