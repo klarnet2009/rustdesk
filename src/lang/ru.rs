@@ -4,6 +4,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Status", "Статус"),
         ("Your Desktop", "Ваш рабочий стол"),
         ("desk_tip", "Ваш рабочий стол доступен с этим ID и паролем."),
+        ("sso_auto_login_tip", "Вход выполнен автоматически через Active Directory"),
         ("Password", "Пароль"),
         ("Ready", "Готов"),
         ("Established", "Установлено"),

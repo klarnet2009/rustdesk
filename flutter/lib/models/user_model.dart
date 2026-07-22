@@ -137,7 +137,13 @@ class UserModel {
       if (host.isEmpty) return;
       
       final spn = "HTTP/$host";
-      final token = await bind.mainGetSsoToken(spn: spn);
+      final token = await bind.mainGetSsoToken(spn: spn).timeout(
+        const Duration(seconds: 8),
+        onTimeout: () {
+          debugPrint("Kerberos SSO token acquisition timed out");
+          return '';
+        },
+      );
       if (token.isEmpty) {
         debugPrint("Kerberos token is empty (SSO not available or failed)");
         return;
@@ -170,8 +176,8 @@ class UserModel {
           debugPrint("Successfully authenticated via Kerberos SSO as ${user.name}");
           
           BotToast.showText(
-            text: "Вход выполнен автоматически через Active Directory",
-            duration: Duration(seconds: 4),
+            text: translate("sso_auto_login_tip"),
+            duration: const Duration(seconds: 4),
           );
         }
       } else {
